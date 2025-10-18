@@ -194,3 +194,73 @@ print("Buscar rating=5.0 →", eh_rating.search(5.0))
 
 print('\n')
 
+# --- Test 4: add() con registro COMPLETO ---
+print("\n--- Test 4: add() con registro completo ---")
+n0 = len(pd.read_csv("Dataset-restaurantes.csv"))
+
+nuevo_id = int(pd.to_numeric(df["Restaurant ID"], errors="coerce").max()) + 101
+base = registros[0]
+
+nuevo_registro = {
+    "Restaurant ID": nuevo_id,
+    "Restaurant Name": f"Restaurante {nuevo_id}",
+    "Country Code": int(base["Country Code"]),
+    "City": base["City"],
+    "Address": "Av. Prueba 123",
+    "Locality": base["Locality"],
+    "Locality Verbose": base["Locality Verbose"],
+    "Longitude": float(base["Longitude"]),
+    "Latitude": float(base["Latitude"]),
+    "Cuisines": base["Cuisines"],
+    "Average Cost for two": int(base["Average Cost for two"]),
+    "Currency": base["Currency"],
+    "Has Table booking": base["Has Table booking"],
+    "Has Online delivery": base["Has Online delivery"],
+    "Is delivering now": base["Is delivering now"],
+    "Switch to order menu": base["Switch to order menu"],
+    "Price range": int(base["Price range"]),
+    "Aggregate rating": 4.3,
+    "Rating color": "Green",
+    "Rating text": "Very Good Burgers ",
+    "Votes": 5.0
+}
+
+print(
+    f"Agregando registro... ID={nuevo_registro['Restaurant ID']}, Name={nuevo_registro['Restaurant Name']}, City={nuevo_registro['City']}")
+print("Resultado add():", eh_id.add(nuevo_registro))
+print("Buscar ID nuevo →", eh_id.search(nuevo_id))
+
+
+# --- Test 5, haciendo add---
+print("\n--- Test 5: segundo add() con registro completo ---")
+
+nuevo_id2 = int(pd.to_numeric(
+    df["Restaurant ID"], errors="coerce").max()) + 202
+nuevo_registro2 = {
+    "Restaurant ID": nuevo_id2,
+    "Restaurant Name": f"[TEST] Restaurante {nuevo_id2}",
+    "Country Code": int(base["Country Code"]),
+    "City": base["City"],
+    "Address": "Jr. Demo 456",
+    "Locality": base["Locality"],
+    "Locality Verbose": base["Locality Verbose"],
+    "Longitude": float(base["Longitude"]) + 0.0002,
+    "Latitude": float(base["Latitude"]) + 0.0002,
+    "Cuisines": base["Cuisines"],
+    "Average Cost for two": int(base["Average Cost for two"]) + 10,
+    "Currency": base["Currency"],
+    "Has Table booking": base["Has Table booking"],
+    "Has Online delivery": base["Has Online delivery"],
+    "Is delivering now": base["Is delivering now"],
+    "Switch to order menu": base["Switch to order menu"],
+    "Price range": int(base["Price range"]),
+    "Aggregate rating": 4.7,
+    "Rating color": "Dark Green",
+    "Rating text": "Excellent",
+    "Votes": 8
+}
+
+print(
+    f"Agregando registro... ID={nuevo_registro2['Restaurant ID']}, Name={nuevo_registro2['Restaurant Name']}, City={nuevo_registro2['City']}")
+print("Resultado add():", eh_id.add(nuevo_registro2))
+print("Buscar ID nuevo →", eh_id.search(nuevo_id2))
