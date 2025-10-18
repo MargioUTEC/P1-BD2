@@ -92,19 +92,10 @@ class ExtendibleHashing:
             # Si el bucket tiene espacio, insertar
             if not bucket.is_full():
                 bucket.items[key] = registro
-                return
+                return f"Registro {key} insertado correctamente"
 
             # Si el bucket está lleno, hacer un split y reintentar
             self._split_bucket(idx)
-
-        # Agregar el registro al CSV si es nuevo
-        self.registros.append(registro)
-        self.df = pd.DataFrame(self.registros)  # Convertimos la lista de registros a DataFrame
-        self._save_to_csv()  # Guardamos el archivo CSV actualizado
-
-    def _save_to_csv(self) -> None:
-        # Guardamos el DataFrame al archivo CSV
-        self.df.to_csv(self.file_path, index=False)
 
     def remove(self, key: Any) -> bool:
         h = self.hash_fn(key)
@@ -118,12 +109,8 @@ class ExtendibleHashing:
         return False
 
 
-# Testeo de las funciones
-
-# Cargar tu archivo CSV (ajusta el path si está en otra carpeta)
-df = pd.read_csv("Dataset-restaurantes.csv")
-
-# Convertimos cada fila en un diccionario
+# ===== Testeo de las funciones =====
+df = pd.read_csv("Dataset-restaurantes.csv") #para leer el csv y convertirlo en diccionario
 registros = df.to_dict(orient="records")
 
 print("Total de registros:", len(registros))
@@ -131,22 +118,22 @@ print("Ejemplo:", registros[0])
 
 
 def custom_hash(k):
-    return int(sha1(str(k).encode()).hexdigest(), 16)
+    return int(sha1(str(k).encode()).hexdigest(), 16) #creamos este custom hash para evitar colisiones
 
 # Mi test 1 para probar el ID de cada restaurante
-print("\n--- Test 1: Usando 'Restaurant ID' ---")
+print("\n === Test 1: Usando 'Restaurant ID' ===")
 eh_id = ExtendibleHashing(
     bucket_capacity=4,
     key_selector=lambda r: r["Restaurant ID"],
     hash_fn=custom_hash,
-    file_path="Dataset-restaurantes.csv"  # Ruta al archivo CSV
+    file_path="Dataset-restaurantes.csv" 
 )
 
-for reg in registros:
+for reg in registros: #Este for es para agregar todos los registros al hash extendible
     eh_id.add(reg)
 
 print('\n')
-print("Buscar ID=17293273 →", eh_id.search(17293273)) # Este es el id del restaurante Thai Kitchen
+print("Buscar ID=17293273 →", eh_id.search(17293273)) # Este es el id del Dolce Vita
 print("Buscar ID inexistente=999999 →", eh_id.search(999999))
 print('\n')
 
@@ -158,12 +145,12 @@ print('\n')
 
 
 # Mi test 2 para probar la variable de 'Votes' de un restaurante
-print("\n--- Test 2: Usando 'Votes' ---")
+print("\n=== Test 2: Usando 'Votes' ===")
 eh_votes = ExtendibleHashing(
-    bucket_capacity=4,
-    key_selector=lambda r: r["Votes"],
-    hash_fn=custom_hash,
-    file_path="Dataset-restaurantes.csv"
+    bucket_capacity = 4,
+    key_selector = lambda r: r["Votes"],
+    hash_fn = custom_hash,
+    file_path = "Dataset-restaurantes.csv"
 )
 
 for reg in registros:
@@ -176,12 +163,13 @@ print('\n')
 
 
 # Test 3 usando 'Aggregate rating'
-print("\n--- Test 3: Usando 'Aggregate rating' ---")
+print("\n=== Test 3: Usando 'Aggregate rating' ===")
+
 eh_rating = ExtendibleHashing(
-    bucket_capacity=4,
-    key_selector=lambda r: r["Aggregate rating"],
-    hash_fn=custom_hash,
-    file_path="Dataset-restaurantes.csv"
+    bucket_capacity = 4,
+    key_selector = lambda r: r["Aggregate rating"],
+    hash_fn = custom_hash,
+    file_path = "Dataset-restaurantes.csv"
 )
 
 for reg in registros:
@@ -195,10 +183,11 @@ print("Buscar rating=5.0 →", eh_rating.search(5.0))
 print('\n')
 
 # --- Test 4: add() con registro COMPLETO ---
-print("\n--- Test 4: add() con registro completo ---")
+print("\n=== Test 4: add() con registro completo ===")
+print('\n')
 n0 = len(pd.read_csv("Dataset-restaurantes.csv"))
 
-nuevo_id = int(pd.to_numeric(df["Restaurant ID"], errors="coerce").max()) + 101
+nuevo_id = int(pd.to_numeric(df["Restaurant ID"], errors="coerce").max()) + 101 #genera el id tomando el maximo y sumandole 101
 base = registros[0]
 
 nuevo_registro = {
@@ -226,26 +215,28 @@ nuevo_registro = {
 }
 
 print(
-    f"Agregando registro... ID={nuevo_registro['Restaurant ID']}, Name={nuevo_registro['Restaurant Name']}, City={nuevo_registro['City']}")
-print("Resultado add():", eh_id.add(nuevo_registro))
-print("Buscar ID nuevo →", eh_id.search(nuevo_id))
+    f"Agregando registro... ID = {nuevo_registro['Restaurant ID']}, Name = {nuevo_registro['Restaurant Name']}, City={nuevo_registro['City']}")
+print("Resultado add(): ", eh_id.add(nuevo_registro))
+print("Buscar ID nuevo = ", eh_id.search(nuevo_id))
+print('\n')
 
 
 # --- Test 5, haciendo add---
-print("\n--- Test 5: segundo add() con registro completo ---")
+print("\n=== Test 5: segundo add() con registro completo ===")
+print('\n')
 
 nuevo_id2 = int(pd.to_numeric(
     df["Restaurant ID"], errors="coerce").max()) + 202
 nuevo_registro2 = {
     "Restaurant ID": nuevo_id2,
-    "Restaurant Name": f"[TEST] Restaurante {nuevo_id2}",
-    "Country Code": int(base["Country Code"]),
+    "Restaurant Name": f"Restaurante {nuevo_id2}",
+    "Country Code": int(base["Country Code"]), #a algunas variables le ponesmo base[] para que tome los datos del primer registro
     "City": base["City"],
     "Address": "Jr. Demo 456",
     "Locality": base["Locality"],
     "Locality Verbose": base["Locality Verbose"],
-    "Longitude": float(base["Longitude"]) + 0.0002,
-    "Latitude": float(base["Latitude"]) + 0.0002,
+    "Longitude": float(base["Longitude"]) + 0.0007,
+    "Latitude": float(base["Latitude"]) + 0.0007,
     "Cuisines": base["Cuisines"],
     "Average Cost for two": int(base["Average Cost for two"]) + 10,
     "Currency": base["Currency"],
@@ -257,10 +248,11 @@ nuevo_registro2 = {
     "Aggregate rating": 4.7,
     "Rating color": "Dark Green",
     "Rating text": "Excellent",
-    "Votes": 8
+    "Votes": 3.5
 }
 
-print(
-    f"Agregando registro... ID={nuevo_registro2['Restaurant ID']}, Name={nuevo_registro2['Restaurant Name']}, City={nuevo_registro2['City']}")
+print(f"Agregando registro... ID = {nuevo_registro2['Restaurant ID']}, Name = {nuevo_registro2['Restaurant Name']}, City = {nuevo_registro2['City']}")
 print("Resultado add():", eh_id.add(nuevo_registro2))
 print("Buscar ID nuevo →", eh_id.search(nuevo_id2))
+
+print('\n')
