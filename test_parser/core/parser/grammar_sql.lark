@@ -1,0 +1,135 @@
+// ==========================================================
+// GRAMÁTICA SQL-LIKE PARA EL MINI GESTOR DE BASES DE DATOS
+// Proyecto BD2 - ParserSQL (by Mauricio & team)
+// Compatible con Lark (parser="lalr")
+// ==========================================================
+
+?start: stmt+
+
+// ----------------------------------------------------------
+// 1. Sentencias principales
+// ----------------------------------------------------------
+
+?stmt: create_table
+     | create_from_file
+     | insert_into
+     | delete_from
+     | select_stmt
+     | COMMENT
+
+// ----------------------------------------------------------
+// 2. CREATE TABLE
+// ----------------------------------------------------------
+
+create_table: "CREATE" "TABLE" CNAME "(" column_def ("," column_def)* ")"
+column_def: CNAME type_spec [KEYKW] [INDEXKW index_type]
+
+KEYKW: "KEY"
+INDEXKW: "INDEX"
+INTKW: "INT"
+FLOATKW: "FLOAT"
+DATEKW: "DATE"
+
+type_spec: INTKW      -> type_int
+         | FLOATKW    -> type_float
+         | DATEKW     -> type_date
+         | varchar_type
+         | array_type
+
+varchar_type: "VARCHAR" "[" NUMBER "]"        -> type_varchar
+array_type: "ARRAY" "[" base_type "]"         -> type_array
+
+base_type: FLOATKW    -> base_float
+         | INTKW      -> base_int
+
+// ----------------------------------------------------------
+// 3. CREATE TABLE FROM FILE
+// ----------------------------------------------------------
+
+create_from_file: "CREATE" "TABLE" CNAME [using_clause] "FROM" "FILE" ESCAPED_STRING
+
+using_all: "ALL"
+using_list: index_type ("," index_type)*
+using_clause: "USING" (using_all | using_list)
+index_type: "ISAM" | "HASH" | "RTREE" | "BTREE" | "AVL"
+
+// ----------------------------------------------------------
+// 4. INSERT
+// ----------------------------------------------------------
+
+insert_into: "INSERT" "INTO" CNAME "VALUES" "(" value ("," value)* ")"
+
+// ----------------------------------------------------------
+// 5. DELETE
+// ----------------------------------------------------------
+
+delete_from: "DELETE" "FROM" CNAME [where_clause]
+
+// ----------------------------------------------------------
+// 6. SELECT
+// ----------------------------------------------------------
+
+select_stmt: "SELECT" column_list "FROM" CNAME [where_clause]
+column_list: "*" | CNAME ("," CNAME)*
+
+// ----------------------------------------------------------
+// 7. WHERE / CONDICIONES (versión extendida)
+// ----------------------------------------------------------
+
+COMPOP: "=" | ">" | "<" | ">=" | "<="
+
+where_clause: "WHERE" condition
+
+// 🔹 Condiciones recursivas con precedencia:
+// OR tiene menor precedencia que AND
+?condition: or_condition
+
+?or_condition: and_condition
+             | or_condition "OR" and_condition   -> or_condition_chain
+
+?and_condition: base_condition
+              | and_condition "AND" base_condition  -> and_condition_chain
+
+?base_condition: comparison_condition
+               | between_condition
+               | in_condition
+               | "(" condition ")"                 -> grouped_condition
+
+// --- Comparación simple: City = "Makati"
+comparison_condition: CNAME COMPOP value                 -> condition_comparison
+
+// --- Rango numérico: Rating BETWEEN 4 AND 5
+between_condition:   CNAME "BETWEEN" value "AND" value   -> condition_between
+
+// --- Búsqueda espacial: coords IN (POINT=[x,y], RADIUS=2)
+in_condition:        CNAME "IN" spatial_expr             -> condition_in
+
+// --- Expresiones espaciales (R-Tree)
+spatial_expr: "(" point "," radius ")"
+point: "POINT" "[" coord_list "]"
+coord_list: NUMBER ("," NUMBER)*                        -> coord_list
+radius: "RADIUS" "=" NUMBER
+
+// ----------------------------------------------------------
+// 8. VALORES Y LITERALES
+// ----------------------------------------------------------
+
+value: SIGNED_NUMBER
+     | ESCAPED_STRING
+     | array_value
+
+array_value: "[" value ("," value)* "]"
+
+// ----------------------------------------------------------
+// 9. TOKENS Y TERMINALES
+// ----------------------------------------------------------
+
+COMMENT: /--.*/
+CNAME: /[a-zA-Z_][a-zA-Z0-9_]*/
+ESCAPED_STRING: /"([^"\\]|\\.)*"/
+NUMBER: /\d+(\.\d+)?/
+SIGNED_NUMBER: ["+" | "-"] NUMBER
+
+%import common.WS
+%ignore WS
+%ignore COMMENT

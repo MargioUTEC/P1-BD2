@@ -12,14 +12,16 @@ import unicodedata
 # =========================
 
 BLOCK_FACTOR = 8  # tamaño de página de datos (registros por página)
+# Ajusta según tu prueba. Con registros "grandes", 8–32 suele ir bien.
 
-# para el índice: (name, city, id)
+# Definición de clave para el índice: (name, city, id)
 NAME_BYTES = 64
 CITY_BYTES = 48
-ID_DIGITS = 10
-KEY_SIZE = NAME_BYTES + CITY_BYTES + ID_DIGITS  # 122 bytes
+ID_DIGITS  = 10  # zero-padded para orden lexicográfico estable
+KEY_SIZE   = NAME_BYTES + CITY_BYTES + ID_DIGITS  # 122 bytes
 
-PAGE_HEADER_FORMAT = "<iq"
+# Formatos de página de datos
+PAGE_HEADER_FORMAT = "<iq"  # count:int32, next_page:int64
 PAGE_HEADER_SIZE   = struct.calcsize(PAGE_HEADER_FORMAT)
 
 # =========================
@@ -27,6 +29,7 @@ PAGE_HEADER_SIZE   = struct.calcsize(PAGE_HEADER_FORMAT)
 # =========================
 
 def _pad(s: str, n: int) -> bytes:
+    # Padding con espacios para consistencia con el índice y las claves
     return s[:n].ljust(n).encode("utf-8", errors="ignore")
 
 
@@ -81,6 +84,7 @@ class Record:
     longitude: float
     latitude: float
 
+    # Campos de longitud fija razonables (ajústalos si quieres ahorrar espacio)
     # name (64), city (48), address (96), cuisines (96), currency (16), rating_text (16)
     FORMAT = (
         "<i"                        # restaurant_id
@@ -101,8 +105,35 @@ class Record:
     SIZE = struct.calcsize(FORMAT)
 
     @staticmethod
+    def from_minimal(restaurant_id: int, name: str, city: str,
+                     longitude: float, latitude: float, aggregate_rating: float) -> "Record":
+        """
+        Crea un Record válido a partir de datos mínimos (para INSERT manuales).
+        Rellena los campos faltantes con valores por defecto seguros.
+        """
+        return Record(
+            restaurant_id=restaurant_id,
+            name=name,
+            country_code=0,
+            city=city,
+            address="N/A",
+            cuisines="N/A",
+            avg_cost_for_two=0,
+            currency="PESO",
+            has_table_booking=False,
+            has_online_delivery=False,
+            is_delivering_now=False,
+            price_range=0,
+            aggregate_rating=aggregate_rating,
+            rating_text="N/A",
+            votes=0,
+            longitude=longitude,
+            latitude=latitude,
+        )
+
+    @staticmethod
     def from_csv_row(row: List[str]) -> "Record":
-        # Columnas:
+        # Columnas (índices según tu muestra):
         # 0 id, 1 name, 2 country_code, 3 city, 4 address,
         # 7 longitude, 8 latitude, 9 cuisines,
         # 10 avg_cost, 11 currency, 12 has_table_booking, 13 has_online_delivery,
@@ -111,22 +142,22 @@ class Record:
         def yesno(x: str) -> bool: return x.strip().lower() == "yes"
         return Record(
             restaurant_id = int(row[0]),
-            name = row[1],
-            country_code = int(row[2]),
-            city = row[3],
-            address = row[4],
-            cuisines = row[9],
+            name          = row[1],
+            country_code  = int(row[2]),
+            city          = row[3],
+            address       = row[4],
+            cuisines      = row[9],
             avg_cost_for_two = int(row[10]),
-            currency = row[11],
-            has_table_booking = yesno(row[12]),
+            currency         = row[11],
+            has_table_booking   = yesno(row[12]),
             has_online_delivery = yesno(row[13]),
-            is_delivering_now = yesno(row[14]),
-            price_range = int(row[16]),
+            is_delivering_now   = yesno(row[14]),
+            price_range      = int(row[16]),
             aggregate_rating = float(row[17]),
-            rating_text = row[19],
-            votes = int(row[20]),
-            longitude = float(row[7]),
-            latitude = float(row[8]),
+            rating_text      = row[19],
+            votes            = int(row[20]),
+            longitude        = float(row[7]),
+            latitude         = float(row[8]),
         )
 
     def pack(self) -> bytes:
@@ -157,6 +188,7 @@ class Record:
          tb, od, dn, pr, ar, rt_b, votes, lon, lat) = struct.unpack(Record.FORMAT, data)
 
         def dec(b: bytes, n: Optional[int] = None) -> str:
+            # decodifica en utf-8 y remueve espacios y NULes de la derecha
             return b.decode("utf-8", errors="ignore").rstrip("\x00 ").strip()
 
         return Record(
@@ -263,11 +295,17 @@ class DataFile:
 
 INDEX_FANOUT = 64  # número máx de hijos por nodo = F (claves F-1). Ajusta según memoria/página índice.
 
-NODE_HEADER_FMT = "B i q q"
-NODE_KEYS_FMT = f"{(INDEX_FANOUT-1)*KEY_SIZE}s"
-NODE_PTRS_FMT = f"{(INDEX_FANOUT-1)}q"
-NODE_FMT = f"<{NODE_HEADER_FMT}{NODE_KEYS_FMT}{NODE_PTRS_FMT}"
-NODE_SIZE = struct.calcsize(NODE_FMT)
+#NODE_HEADER_FMT = "<B i q q"
+# is_leaf: uint8 (0/1)
+# key_count: int32
+# p0: int64 (primer puntero)
+# next_sibling: int64 (opcional; -1 si no se usa)
+
+NODE_HEADER_FMT = "B i q q"  # is_leaf:uint8, key_count:int32, p0:int64, next_sibling:int64
+NODE_KEYS_FMT   = f"{(INDEX_FANOUT-1)*KEY_SIZE}s"
+NODE_PTRS_FMT   = f"{(INDEX_FANOUT-1)}q"
+NODE_FMT        = f"<{NODE_HEADER_FMT}{NODE_KEYS_FMT}{NODE_PTRS_FMT}"
+NODE_SIZE       = struct.calcsize(NODE_FMT)
 
 
 def _pack_keys(keys: list[str]) -> bytes:
@@ -330,12 +368,12 @@ class MultiLevelIndex:
     def __init__(self, filename: str):
         self.filename = filename
         self.root_off: int = -1
-        # si existe el archivo de índice, infiere el root como el último nodo
+        # Nuevo: si existe el archivo de índice, infiere el root como el último nodo
         try:
             if os.path.exists(self.filename):
                 sz = os.path.getsize(self.filename)
                 if sz >= NODE_SIZE:
-                    # el root se escribe de último
+                    # En tu construcción, el root se escribe de último
                     self.root_off = sz - NODE_SIZE
         except Exception:
             # Si algo sale mal, mantenemos -1 y el caller puede reconstruir
@@ -400,7 +438,7 @@ class MultiLevelIndex:
             self.root_off = -1
             return
 
-        # 4) ORDENAR GLOBALMENTE por first_key
+        # 4) MUY IMPORTANTE: ORDENAR GLOBALMENTE por first_key
         leaves_entries.sort(key=lambda t: t[0])
 
         # 5) Empaquetar en nodos hoja
@@ -533,57 +571,118 @@ class ISAM:
     # ---------- Búsqueda ----------
     def search(self, name: str, city: str, restaurant_id: Optional[int] = None):
         """
-        Busca un registro por (name, city, restaurant_id) de forma consistente con make_key().
-        Tolera UTF-8, tildes y variaciones de mayúsculas/minúsculas.
+        Busca uno o varios registros por (name, city, restaurant_id) de forma consistente con make_key().
+        Tolera UTF-8, tildes, mayúsculas/minúsculas y búsquedas parciales.
+        Retorna una lista de (offset, Record).
         """
         # Verifica que el índice exista
         if not os.path.exists(self.index.filename) or self.index.root_off == -1:
-            return None
+            return []
 
-        # --- Normalización ---
-        name_norm = normalize_text(name)
-        city_norm = normalize_text(city)
+        # --- Normalización consistente ---
+        name_norm = normalize_text(name or "")
+        city_norm = normalize_text(city or "")
 
-        # Clave: usa un ID neutro alto si es None (evita caer en la página anterior)
-        rid = restaurant_id if restaurant_id is not None else 9999999999
-        k = make_key(name_norm, city_norm, rid)
+        # ===============================================
+        # ✅ Clave base para búsqueda (más inteligente)
+        # - Si hay restaurant_id -> búsqueda exacta
+        # - Si no hay restaurant_id -> solo usa name+city
+        #   (permite búsquedas parciales)
+        # ===============================================
+        if restaurant_id is not None:
+            k = make_key(name_norm, city_norm, restaurant_id)
+        else:
+            # usamos id = 0 como ancla inferior para ubicar la primera página posible
+            k = make_key(name_norm, city_norm, 0)
+
+        results = []
+        visited = set()
 
         # --- Buscar la página base ---
         off = self.index.find_page_offset(k)
-        visited = set()
-
         while off != -1 and off not in visited:
             visited.add(off)
             pg = self.data.read_page_at(off)
 
             for rec in pg.records:
-                # Comparación exacta con normalización simétrica
-                if (normalize_text(rec.name) == name_norm and
-                        normalize_text(rec.city) == city_norm and
-                        (restaurant_id is None or rec.restaurant_id == restaurant_id)):
-                    return off, rec
+                nrec = normalize_text(rec.name)
+                crec = normalize_text(rec.city)
+
+                # Coincidencia flexible (exacta o prefijo)
+                name_match = (
+                        not name_norm or
+                        nrec == name_norm or
+                        nrec.startswith(name_norm)
+                )
+
+                city_match = (
+                        not city_norm or
+                        crec == city_norm or
+                        crec.startswith(city_norm)
+                )
+
+                if name_match and city_match and (restaurant_id is None or rec.restaurant_id == restaurant_id):
+                    results.append((off, rec))
 
             off = pg.next_page
 
-        # --- Búsqueda secundaria si no se encuentra ---
-        # Si no se especificó ID, realiza barrido por prefijo (útil para búsquedas parciales)
-        if restaurant_id is None:
-            base_prefix = (name_norm[:NAME_BYTES].ljust(NAME_BYTES) +
-                           city_norm[:CITY_BYTES].ljust(CITY_BYTES))
+        # --- Si no hay resultados, intentar barrido global ---
+        if not results:
             for off, pg in self.data.iter_pages():
                 for rec in pg.records:
-                    rec_prefix = (normalize_text(rec.name)[:NAME_BYTES].ljust(NAME_BYTES) +
-                                  normalize_text(rec.city)[:CITY_BYTES].ljust(CITY_BYTES))
-                    if rec_prefix == base_prefix:
-                        return off, rec
+                    nrec = normalize_text(rec.name)
+                    crec = normalize_text(rec.city)
+                    name_match = (
+                            not name_norm or
+                            nrec == name_norm or
+                            nrec.startswith(name_norm)
+                    )
+                    city_match = (
+                            not city_norm or
+                            crec == city_norm or
+                            crec.startswith(city_norm)
+                    )
+                    if name_match and city_match and (restaurant_id is None or rec.restaurant_id == restaurant_id):
+                        results.append((off, rec))
 
-        return None
+        # Convertimos a estructura estándar
+        return [
+            {
+                "restaurant_id": r.restaurant_id,
+                "restaurant_name": r.name,
+                "city": r.city,
+                "longitude": r.longitude,
+                "latitude": r.latitude,
+                "average_cost_for_two": r.avg_cost_for_two,
+                "aggregate_rating": r.aggregate_rating,
+                "votes": r.votes
+            }
+            for _, r in results
+        ]
 
     def range_search(self, begin_key: str, end_key: str):
+        """
+        Busca todos los registros cuyas claves estén entre begin_key y end_key (inclusive).
+        Si las claves no incluyen restaurant_id, se completan con ceros y nueves
+        para definir los límites del rango de forma estable.
+        """
         res = []
+
+        # --- Normalización y ajuste de claves límite ---
+        begin_key = normalize_text(begin_key or "")
+        end_key = normalize_text(end_key or "")
+
+        # Si las claves no están completas, se rellenan:
+        if len(begin_key) < KEY_SIZE:
+            begin_key = (begin_key + "0" * ID_DIGITS).ljust(KEY_SIZE)
+        if len(end_key) < KEY_SIZE:
+            end_key = (end_key + "9" * ID_DIGITS).ljust(KEY_SIZE)
+
+        # --- Buscar la primera página base ---
         off = self.index.find_page_offset(begin_key)
         while off != -1:
             pg = self.data.read_page_at(off)
+
             # registros de esta página (en orden)
             for rec in pg.records:
                 k = rec.key()
@@ -592,6 +691,7 @@ class ISAM:
                 if k > end_key:
                     return res
                 res.append((off, rec))
+
             # recorrer overflow de esta base
             nxt_off = pg.next_page
             while nxt_off != -1:
@@ -603,11 +703,26 @@ class ISAM:
                     if k >= begin_key:
                         res.append((nxt_off, rec))
                 nxt_off = pgo.next_page
+
             # pasar a la siguiente página base física
             off += Page.SIZE_OF_PAGE
             if off >= os.path.getsize(self.data.filename):
                 break
-        return res
+
+        # Convertimos a estructura estándar
+        return [
+            {
+                "restaurant_id": r.restaurant_id,
+                "restaurant_name": r.name,
+                "city": r.city,
+                "longitude": r.longitude,
+                "latitude": r.latitude,
+                "average_cost_for_two": r.avg_cost_for_two,
+                "aggregate_rating": r.aggregate_rating,
+                "votes": r.votes
+            }
+            for _, r in res
+        ]
 
     # ---------- Inserción ----------
     # Política simple: mantener ISAM clásico con overflow; no alteramos estructura del índice (estático).

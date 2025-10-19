@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>DB2 Query Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="/static/style.css" rel="stylesheet" />
+</head>
+<body>
+  <header>
+    <h1>DB2 Query Console</h1>
+  </header>
+
+  <main>
+    <section class="query-panel">
+      <textarea id="sqlInput" placeholder="Escribe tu consulta SQL aquí..."></textarea>
+      <div class="buttons">
+        <button id="runBtn">▶ Ejecutar</button>
+        <button id="clearBtn">🧹 Limpiar</button>
+      </div>
+    </section>
+
+    <section class="tabs">
+      <button class="tab active" data-tab="table">🧮 Resultados</button>
+      <button class="tab" data-tab="log">🧾 Log</button>
+    </section>
+
+    <section id="tableView" class="tab-content active">
+      <div class="toolbar">
+        <input type="search" id="searchBox" placeholder="Filtrar resultados..." />
+        <span id="rowCount" class="muted"></span>
+      </div>
+      <table id="resultsTable">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+      <div id="emptyState" class="empty">
+        <p>Ejecuta una consulta para ver los resultados aquí.</p>
+      </div>
+    </section>
+
+    <section id="logView" class="tab-content">
+      <pre id="logOutput"></pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>Desarrollado con FastAPI · Proyecto DB2</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

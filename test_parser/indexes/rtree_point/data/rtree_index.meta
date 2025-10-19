@@ -1,0 +1,197 @@
+{
+  "0": {
+    "coords": [
+      121.027535,
+      14.565443
+    ],
+    "payload": {
+      "Restaurant_ID": 6317637,
+      "Restaurant_Name": "Le Petit Souffle",
+      "City": "Makati City",
+      "Cuisines": "French, Japanese, Desserts",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "1": {
+    "coords": [
+      121.014101,
+      14.553708
+    ],
+    "payload": {
+      "Restaurant_ID": 6304287,
+      "Restaurant_Name": "Izakaya Kikufuji",
+      "City": "Makati City",
+      "Cuisines": "Japanese",
+      "Aggregate_rating": 4.5
+    }
+  },
+  "2": {
+    "coords": [
+      121.056831,
+      14.581404
+    ],
+    "payload": {
+      "Restaurant_ID": 6300002,
+      "Restaurant_Name": "Heat - Edsa Shangri-La",
+      "City": "Mandaluyong City",
+      "Cuisines": "Seafood, Asian, Filipino, Indian",
+      "Aggregate_rating": 4.4
+    }
+  },
+  "3": {
+    "coords": [
+      121.056475,
+      14.585318
+    ],
+    "payload": {
+      "Restaurant_ID": 6318506,
+      "Restaurant_Name": "Ooma",
+      "City": "Mandaluyong City",
+      "Cuisines": "Japanese, Sushi",
+      "Aggregate_rating": 4.9
+    }
+  },
+  "4": {
+    "coords": [
+      121.057508,
+      14.58445
+    ],
+    "payload": {
+      "Restaurant_ID": 6314302,
+      "Restaurant_Name": "Sambo Kojin",
+      "City": "Mandaluyong City",
+      "Cuisines": "Japanese, Korean",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "5": {
+    "coords": [
+      121.056314,
+      14.583764
+    ],
+    "payload": {
+      "Restaurant_ID": 18189371,
+      "Restaurant_Name": "Din Tai Fung",
+      "City": "Mandaluyong City",
+      "Cuisines": "Chinese",
+      "Aggregate_rating": 4.4
+    }
+  },
+  "6": {
+    "coords": [
+      120.9796667,
+      14.53133333
+    ],
+    "payload": {
+      "Restaurant_ID": 6300781,
+      "Restaurant_Name": "Buffet 101",
+      "City": "Pasay City",
+      "Cuisines": "Asian, European",
+      "Aggregate_rating": 4.0
+    }
+  },
+  "7": {
+    "coords": [
+      120.9793333,
+      14.54
+    ],
+    "payload": {
+      "Restaurant_ID": 6301290,
+      "Restaurant_Name": "Vikings",
+      "City": "Pasay City",
+      "Cuisines": "Seafood, Filipino, Asian, European",
+      "Aggregate_rating": 4.2
+    }
+  },
+  "8": {
+    "coords": [
+      120.98009,
+      14.55299
+    ],
+    "payload": {
+      "Restaurant_ID": 6300010,
+      "Restaurant_Name": "Spiral - Sofitel Philippine Plaza Manila",
+      "City": "Pasay City",
+      "Cuisines": "European, Asian, Indian",
+      "Aggregate_rating": 4.9
+    }
+  },
+  "9": {
+    "coords": [
+      121.056532,
+      14.572041
+    ],
+    "payload": {
+      "Restaurant_ID": 6314987,
+      "Restaurant_Name": "Locavore",
+      "City": "Pasig City",
+      "Cuisines": "Filipino",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "10": {
+    "coords": [
+      121.057916,
+      14.567689
+    ],
+    "payload": {
+      "Restaurant_ID": 6309903,
+      "Restaurant_Name": "Silantro Fil-Mex",
+      "City": "Pasig City",
+      "Cuisines": "Filipino, Mexican",
+      "Aggregate_rating": 4.9
+    }
+  },
+  "11": {
+    "coords": [
+      121.06082,
+      14.570849
+    ],
+    "payload": {
+      "Restaurant_ID": 6309455,
+      "Restaurant_Name": "Mad Mark's Creamery & Good Eats",
+      "City": "Pasig City",
+      "Cuisines": "American, Ice Cream, Desserts",
+      "Aggregate_rating": 4.2
+    }
+  },
+  "12": {
+    "coords": [
+      121.075419,
+      14.649503
+    ],
+    "payload": {
+      "Restaurant_ID": 6318433,
+      "Restaurant_Name": "Silantro Fil-Mex",
+      "City": "Quezon City",
+      "Cuisines": "Filipino, Mexican",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "13": {
+    "coords": [
+      121.0335917,
+      14.59345
+    ],
+    "payload": {
+      "Restaurant_ID": 6310470,
+      "Restaurant_Name": "Guevarra's",
+      "City": "San Juan City",
+      "Cuisines": "Filipino",
+      "Aggregate_rating": 4.2
+    }
+  },
+  "14": {
+    "coords": [
+      121.03811,
+      14.59889
+    ],
+    "payload": {
+      "Restaurant_ID": 6314605,
+      "Restaurant_Name": "Sodam Korean Restaurant",
+      "City": "San Juan City",
+      "Cuisines": "Korean",
+      "Aggregate_rating": 4.3
+    }
+  }
+}

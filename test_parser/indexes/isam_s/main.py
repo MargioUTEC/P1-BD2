@@ -3,7 +3,7 @@ import time
 import random
 from typing import List, Tuple
 
-from ISAM import (
+from isam import (
     ISAM, Record, _read_restaurants_csv,
     _index_summary, _quick_summary, make_key
 )
@@ -11,7 +11,7 @@ from ISAM import (
 # --- Archivos principales ---
 DATA_PATH  = "restaurants.dat"
 INDEX_PATH = "restaurants.idx"
-CSV_PATH   = "../Dataset-restaurantes.csv"
+CSV_PATH   = "Dataset.csv"
 
 
 # ---------- Helpers de test ----------

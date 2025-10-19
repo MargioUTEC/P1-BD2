@@ -1,0 +1,602 @@
+{
+  "0": {
+    "coords": [
+      -43.176,
+      -22.96516667
+    ],
+    "payload": {
+      "Restaurant_ID": 7300612,
+      "Restaurant_Name": "Amir",
+      "City": "Rio de Janeiro",
+      "Aggregate_rating": 4.2
+    }
+  },
+  "1": {
+    "coords": [
+      -43.211425,
+      -22.98520833
+    ],
+    "payload": {
+      "Restaurant_ID": 7300521,
+      "Restaurant_Name": "Balada Mix",
+      "City": "Rio de Janeiro",
+      "Aggregate_rating": 4.6
+    }
+  },
+  "2": {
+    "coords": [
+      120.951589,
+      14.101834
+    ],
+    "payload": {
+      "Restaurant_ID": 6318213,
+      "Restaurant_Name": "Balay Dako",
+      "City": "Tagaytay City",
+      "Aggregate_rating": 4.5
+    }
+  },
+  "3": {
+    "coords": [
+      -47.9075,
+      -15.82
+    ],
+    "payload": {
+      "Restaurant_ID": 6600214,
+      "Restaurant_Name": "Beirute",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.7
+    }
+  },
+  "4": {
+    "coords": [
+      -43.18669167,
+      -22.97207222
+    ],
+    "payload": {
+      "Restaurant_ID": 7301215,
+      "Restaurant_Name": "Bibi",
+      "City": "Rio de Janeiro",
+      "Aggregate_rating": 4.7
+    }
+  },
+  "5": {
+    "coords": [
+      -43.227042,
+      -22.973507
+    ],
+    "payload": {
+      "Restaurant_ID": 7300955,
+      "Restaurant_Name": "Braseiro da G��vea",
+      "City": "Rio de Janeiro",
+      "Aggregate_rating": 4.9
+    }
+  },
+  "6": {
+    "coords": [
+      -47.92102778,
+      -15.79753056
+    ],
+    "payload": {
+      "Restaurant_ID": 6601457,
+      "Restaurant_Name": "Brazilian American Burgers",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.6
+    }
+  },
+  "7": {
+    "coords": [
+      -48.01909167,
+      -15.839775
+    ],
+    "payload": {
+      "Restaurant_ID": 6601361,
+      "Restaurant_Name": "Buena Carne",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.6
+    }
+  },
+  "8": {
+    "coords": [
+      120.9796667,
+      14.53133333
+    ],
+    "payload": {
+      "Restaurant_ID": 6300781,
+      "Restaurant_Name": "Buffet 101",
+      "City": "Pasay City",
+      "Aggregate_rating": 4.0
+    }
+  },
+  "9": {
+    "coords": [
+      121.05704,
+      14.237082
+    ],
+    "payload": {
+      "Restaurant_ID": 18185059,
+      "Restaurant_Name": "Cafe Arabelle",
+      "City": "Santa Rosa",
+      "Aggregate_rating": 3.6
+    }
+  },
+  "10": {
+    "coords": [
+      -47.88266667,
+      -15.7775
+    ],
+    "payload": {
+      "Restaurant_ID": 6601005,
+      "Restaurant_Name": "Caf�� Daniel Briand",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.8
+    }
+  },
+  "11": {
+    "coords": [
+      -47.88213611,
+      -15.75747222
+    ],
+    "payload": {
+      "Restaurant_ID": 6600292,
+      "Restaurant_Name": "Casa do Biscoito Mineiro",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.7
+    }
+  },
+  "12": {
+    "coords": [
+      -43.17583333,
+      -22.96216667
+    ],
+    "payload": {
+      "Restaurant_ID": 7300596,
+      "Restaurant_Name": "Cervantes",
+      "City": "Rio de Janeiro",
+      "Aggregate_rating": 4.5
+    }
+  },
+  "13": {
+    "coords": [
+      -47.88178889,
+      -15.76414167
+    ],
+    "payload": {
+      "Restaurant_ID": 6600681,
+      "Restaurant_Name": "Chez Michou",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.0
+    }
+  },
+  "14": {
+    "coords": [
+      -47.8685,
+      -15.819
+    ],
+    "payload": {
+      "Restaurant_ID": 6600427,
+      "Restaurant_Name": "Coco Bambu",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 4.9
+    }
+  },
+  "15": {
+    "coords": [
+      -47.889,
+      -15.7865
+    ],
+    "payload": {
+      "Restaurant_ID": 6601589,
+      "Restaurant_Name": "Coco Bambu",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 4.2
+    }
+  },
+  "16": {
+    "coords": [
+      -43.178826,
+      -22.905293
+    ],
+    "payload": {
+      "Restaurant_ID": 7304307,
+      "Restaurant_Name": "Confeitaria Colombo",
+      "City": "Rio de Janeiro",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "17": {
+    "coords": [
+      121.056314,
+      14.583764
+    ],
+    "payload": {
+      "Restaurant_ID": 18189371,
+      "Restaurant_Name": "Din Tai Fung",
+      "City": "Mandaluyong City",
+      "Aggregate_rating": 4.4
+    }
+  },
+  "18": {
+    "coords": [
+      -47.885812,
+      -15.720118
+    ],
+    "payload": {
+      "Restaurant_ID": 6600116,
+      "Restaurant_Name": "Gero",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.3
+    }
+  },
+  "19": {
+    "coords": [
+      121.0335917,
+      14.59345
+    ],
+    "payload": {
+      "Restaurant_ID": 6310470,
+      "Restaurant_Name": "Guevarra's",
+      "City": "San Juan City",
+      "Aggregate_rating": 4.2
+    }
+  },
+  "20": {
+    "coords": [
+      121.056831,
+      14.581404
+    ],
+    "payload": {
+      "Restaurant_ID": 6300002,
+      "Restaurant_Name": "Heat - Edsa Shangri-La",
+      "City": "Mandaluyong City",
+      "Aggregate_rating": 4.4
+    }
+  },
+  "21": {
+    "coords": [
+      121.045878,
+      14.55436
+    ],
+    "payload": {
+      "Restaurant_ID": 18255654,
+      "Restaurant_Name": "Hobing Korean Dessert Cafe",
+      "City": "Taguig City",
+      "Aggregate_rating": 4.5
+    }
+  },
+  "22": {
+    "coords": [
+      121.014101,
+      14.553708
+    ],
+    "payload": {
+      "Restaurant_ID": 6304287,
+      "Restaurant_Name": "Izakaya Kikufuji",
+      "City": "Makati City",
+      "Aggregate_rating": 4.5
+    }
+  },
+  "23": {
+    "coords": [
+      121.027535,
+      14.565443
+    ],
+    "payload": {
+      "Restaurant_ID": 6317637,
+      "Restaurant_Name": "Le Petit Souffle",
+      "City": "Makati City",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "24": {
+    "coords": [
+      121.056532,
+      14.572041
+    ],
+    "payload": {
+      "Restaurant_ID": 6314987,
+      "Restaurant_Name": "Locavore",
+      "City": "Pasig City",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "25": {
+    "coords": [
+      121.06082,
+      14.570849
+    ],
+    "payload": {
+      "Restaurant_ID": 6309455,
+      "Restaurant_Name": "Mad Mark's Creamery & Good Eats",
+      "City": "Pasig City",
+      "Aggregate_rating": 4.2
+    }
+  },
+  "26": {
+    "coords": [
+      -47.87283333,
+      -15.82566667
+    ],
+    "payload": {
+      "Restaurant_ID": 6601158,
+      "Restaurant_Name": "Manzu��",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.2
+    }
+  },
+  "27": {
+    "coords": [
+      -47.88816667,
+      -15.75883333
+    ],
+    "payload": {
+      "Restaurant_ID": 6600441,
+      "Restaurant_Name": "Maori",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.8
+    }
+  },
+  "28": {
+    "coords": [
+      -47.91016667,
+      -15.82733333
+    ],
+    "payload": {
+      "Restaurant_ID": 6601218,
+      "Restaurant_Name": "New Koto",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.7
+    }
+  },
+  "29": {
+    "coords": [
+      121.053725,
+      14.545858
+    ],
+    "payload": {
+      "Restaurant_ID": 6315438,
+      "Restaurant_Name": "NIU by Vikings",
+      "City": "Taguig City",
+      "Aggregate_rating": 4.7
+    }
+  },
+  "30": {
+    "coords": [
+      121.0565874,
+      14.23767897
+    ],
+    "payload": {
+      "Restaurant_ID": 18182702,
+      "Restaurant_Name": "Nonna's Pasta & Pizzeria",
+      "City": "Santa Rosa",
+      "Aggregate_rating": 4.0
+    }
+  },
+  "31": {
+    "coords": [
+      121.056475,
+      14.585318
+    ],
+    "payload": {
+      "Restaurant_ID": 6318506,
+      "Restaurant_Name": "Ooma",
+      "City": "Mandaluyong City",
+      "Aggregate_rating": 4.9
+    }
+  },
+  "32": {
+    "coords": [
+      -47.95628333,
+      -15.83451389
+    ],
+    "payload": {
+      "Restaurant_ID": 6601595,
+      "Restaurant_Name": "Outback Steakhouse",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 4.0
+    }
+  },
+  "33": {
+    "coords": [
+      -43.377,
+      -23.0115
+    ],
+    "payload": {
+      "Restaurant_ID": 7303219,
+      "Restaurant_Name": "Pesqueiro Eco Gourmet",
+      "City": "Rio de Janeiro",
+      "Aggregate_rating": 4.0
+    }
+  },
+  "34": {
+    "coords": [
+      -47.91566667,
+      -15.83116667
+    ],
+    "payload": {
+      "Restaurant_ID": 6600970,
+      "Restaurant_Name": "Pizza �� Bessa",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.2
+    }
+  },
+  "35": {
+    "coords": [
+      -48.019,
+      -15.83716667
+    ],
+    "payload": {
+      "Restaurant_ID": 6601515,
+      "Restaurant_Name": "Rovereto",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.1
+    }
+  },
+  "36": {
+    "coords": [
+      121.057508,
+      14.58445
+    ],
+    "payload": {
+      "Restaurant_ID": 6314302,
+      "Restaurant_Name": "Sambo Kojin",
+      "City": "Mandaluyong City",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "37": {
+    "coords": [
+      -47.89016667,
+      -15.797
+    ],
+    "payload": {
+      "Restaurant_ID": 6600060,
+      "Restaurant_Name": "Sandubas Caf��",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 0.0
+    }
+  },
+  "38": {
+    "coords": [
+      121.057916,
+      14.567689
+    ],
+    "payload": {
+      "Restaurant_ID": 6309903,
+      "Restaurant_Name": "Silantro Fil-Mex",
+      "City": "Pasig City",
+      "Aggregate_rating": 4.9
+    }
+  },
+  "39": {
+    "coords": [
+      121.075419,
+      14.649503
+    ],
+    "payload": {
+      "Restaurant_ID": 6318433,
+      "Restaurant_Name": "Silantro Fil-Mex",
+      "City": "Quezon City",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "40": {
+    "coords": [
+      121.03811,
+      14.59889
+    ],
+    "payload": {
+      "Restaurant_ID": 6314605,
+      "Restaurant_Name": "Sodam Korean Restaurant",
+      "City": "San Juan City",
+      "Aggregate_rating": 4.3
+    }
+  },
+  "41": {
+    "coords": [
+      120.98009,
+      14.55299
+    ],
+    "payload": {
+      "Restaurant_ID": 6300010,
+      "Restaurant_Name": "Spiral - Sofitel Philippine Plaza Manila",
+      "City": "Pasay City",
+      "Aggregate_rating": 4.9
+    }
+  },
+  "42": {
+    "coords": [
+      -47.91566667,
+      -15.831
+    ],
+    "payload": {
+      "Restaurant_ID": 6600379,
+      "Restaurant_Name": "Sushi Loko",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.1
+    }
+  },
+  "43": {
+    "coords": [
+      -48.01666667,
+      -15.83483333
+    ],
+    "payload": {
+      "Restaurant_ID": 6601602,
+      "Restaurant_Name": "Taco Pep",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 4.3
+    }
+  },
+  "44": {
+    "coords": [
+      -47.872359,
+      -15.860621
+    ],
+    "payload": {
+      "Restaurant_ID": 6601862,
+      "Restaurant_Name": "Tayp��",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 3.6
+    }
+  },
+  "45": {
+    "coords": [
+      121.0534998,
+      14.54565535
+    ],
+    "payload": {
+      "Restaurant_ID": 6310406,
+      "Restaurant_Name": "The Food Hall by Todd English",
+      "City": "Taguig City",
+      "Aggregate_rating": 4.5
+    }
+  },
+  "46": {
+    "coords": [
+      -43.191,
+      -22.98683333
+    ],
+    "payload": {
+      "Restaurant_ID": 7300704,
+      "Restaurant_Name": "TT Burger",
+      "City": "Rio de Janeiro",
+      "Aggregate_rating": 4.8
+    }
+  },
+  "47": {
+    "coords": [
+      120.9793333,
+      14.54
+    ],
+    "payload": {
+      "Restaurant_ID": 6301290,
+      "Restaurant_Name": "Vikings",
+      "City": "Pasay City",
+      "Aggregate_rating": 4.2
+    }
+  },
+  "48": {
+    "coords": [
+      -47.92366667,
+      -15.83133333
+    ],
+    "payload": {
+      "Restaurant_ID": 6600083,
+      "Restaurant_Name": "Villa Tevere",
+      "City": "Bras�_lia",
+      "Aggregate_rating": 4.1
+    }
+  },
+  "49": {
+    "coords": [
+      121.04622,
+      14.549337
+    ],
+    "payload": {
+      "Restaurant_ID": 6308205,
+      "Restaurant_Name": "Wildflour Cafe + Bakery",
+      "City": "Taguig City",
+      "Aggregate_rating": 4.4
+    }
+  }
+}
