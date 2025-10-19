@@ -583,12 +583,12 @@ class ISAM:
         name_norm = normalize_text(name or "")
         city_norm = normalize_text(city or "")
 
-        # ===============================================
-        # ✅ Clave base para búsqueda (más inteligente)
+        # =========================================
+        # Clave base para búsqueda
         # - Si hay restaurant_id -> búsqueda exacta
-        # - Si no hay restaurant_id -> solo usa name+city
+        # - Si no hay restaurant_id -> solo usa name + city
         #   (permite búsquedas parciales)
-        # ===============================================
+        # ========================================
         if restaurant_id is not None:
             k = make_key(name_norm, city_norm, restaurant_id)
         else:
@@ -598,7 +598,7 @@ class ISAM:
         results = []
         visited = set()
 
-        # --- Buscar la página base ---
+        # --- Busca la página base ---
         off = self.index.find_page_offset(k)
         while off != -1 and off not in visited:
             visited.add(off)
@@ -608,7 +608,7 @@ class ISAM:
                 nrec = normalize_text(rec.name)
                 crec = normalize_text(rec.city)
 
-                # Coincidencia flexible (exacta o prefijo)
+                # Coincidencia flexible
                 name_match = (
                         not name_norm or
                         nrec == name_norm or
