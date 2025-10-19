@@ -4,10 +4,8 @@ import inspect
 import pandas as pd
 import sys, os
 
-# === Asegurar path raíz ===
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# === Rutas a tus módulos ===
 TECHNIQUES = {
     "ISAM": "test_parser.indexes.isam_s.isam",
     "Extendible Hashing": "test_parser.indexes.hashing.extendible_hashing",

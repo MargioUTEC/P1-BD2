@@ -31,7 +31,7 @@ Este proyecto busca demostrar eficiencia en las operaciones, claridad en la estr
 * **Locality Verbose:** Descripción detallada de la localidad.
 * **Longitude:** Coordenada de longitud de la ubicación del restaurante.
 * **Latitude:** Coordenada de latitud de la ubicación del restaurante.
-* **Cuisines:** Tipo de cocina ofrecida por el restaurante (variable objetivo).
+* **Cuisines:** Tipo de cocina ofrecida por el restaurante.
 * **Average Cost for Two:** Costo promedio para dos personas al comer en el restaurante.
 * **Currency:** Moneda utilizada para los precios.
 * **Has Table Booking:** Variable binaria que indica si el restaurante acepta reservas de mesa.
