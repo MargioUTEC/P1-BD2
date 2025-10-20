@@ -61,13 +61,20 @@ Cada estructura se guarda en archivos binarios independientes y es administrada 
 
 ------------------------------------------------------------
 
-PASOS DE EJECUCIÓN
+## 🚀 Ejecución del Sistema
 
-1. Inicializar índices y cargar dataset
-Ejecutar en la terminal:
+1️⃣ Iniciar los índices y preparar el entorno
+------------------------------------------------------------
+Antes de ejecutar la interfaz, inicializa o reabre los índices persistentes.  
+Desde la raíz del proyecto, ejecutar:
+
 python -m tiempo.test_tiempo
 
-Este comando carga el dataset principal (Dataset.csv) y crea o reabre todos los índices del sistema.
+Este comando:
+- Carga el dataset Dataset.csv.
+- Construye o reabre todos los índices físicos.
+- Verifica integridad y persistencia de datos.
+
 Salida esperada:
 [INIT] Cargando IndexManager...
 [INIT] ISAM inicializado correctamente.
@@ -76,99 +83,115 @@ Salida esperada:
 [INIT] B+-Tree reabierto correctamente.
 [INFO] R-Tree reabierto con 50 registros.
 
-Cada estructura se guarda en su archivo binario dentro de test_parser/data/, manteniendo persistencia entre ejecuciones.
-
 ------------------------------------------------------------
 
-2. Iniciar el servidor web
-Ejecutar:
+2️⃣ Levantar el servidor backend
+------------------------------------------------------------
+Ejecutar el servidor Flask:
+
 python server.py
 
-Esto inicia el servidor backend (Flask o FastAPI).
-Luego abrir el navegador en:
+El backend se ejecutará en:
 http://127.0.0.1:8000
 
-En esta interfaz se encuentran tres secciones:
-- Consola SQL para ejecutar consultas.
-- Búsqueda guiada para seleccionar filtros.
-- Explorador de índices para visualizar las estructuras internas.
+Responsabilidades del backend:
+- Recibir las consultas SQL enviadas por el frontend.
+- Interpretarlas mediante el parser SQL.
+- Generar el plan de ejecución.
+- Delegar búsquedas al IndexManager.
+- Combinar resultados y devolverlos en formato JSON.
 
 ------------------------------------------------------------
 
-3. Ejecutar consultas SQL
-Ejemplos de uso:
+3️⃣ Acceder al frontend
+------------------------------------------------------------
+Abrir en el navegador:
+http://127.0.0.1:8000
 
-Consulta simple (ISAM):
-SELECT * FROM restaurants WHERE city = "Lima";
-
-Comparación numérica (AVL):
-SELECT restaurant_name, city, aggregate_rating
-FROM restaurants
-WHERE aggregate_rating > 4.5;
-
-Consulta espacial (R-Tree):
-SELECT restaurant_id, restaurant_name, longitude, latitude
-FROM restaurants
-WHERE city = "Taguig City" USING RTREE;
-
-Condición compuesta (ISAM + AVL):
-SELECT * FROM restaurants
-WHERE city = "Taguig City" AND aggregate_rating > 4.0;
+La interfaz presenta tres secciones:
+- Consola SQL: permite escribir consultas directamente.
+- Búsqueda guiada: filtra registros por campos comunes.
+- Explorador de índices: visualiza estructuras internas (ISAM, AVL, etc.).
 
 ------------------------------------------------------------
 
-ORDEN DE EJECUCIÓN INTERNA
+## 💻 Flujo de Ejecución Completo
 
-Etapa 1: frontend
-El usuario ingresa la consulta SQL.
+Cuando el usuario ejecuta una consulta SQL desde el frontend, el flujo es:
 
-Etapa 2: parser_sql
-Se tokeniza la consulta y se genera el árbol sintáctico (AST).
+Etapa 1 — Frontend
+------------------------------------------------------------
+1. El usuario ingresa la consulta:
+SELECT restaurant_name, city, aggregate_rating 
+FROM restaurants 
+WHERE city = "Lima" AND aggregate_rating > 4.0;
 
-Etapa 3: executor
-Se construye el plan de ejecución.
+2. La consulta se envía al backend mediante una solicitud HTTP (POST).
 
-Etapa 4: index_manager
-Se selecciona la estructura de índice más adecuada.
+Etapa 2 — Parser SQL (backend)
+------------------------------------------------------------
+1. parser_sql convierte la cadena SQL en tokens (SELECT, FROM, WHERE).
+2. Valida la estructura según grammar_sql.lark.
+3. Construye un árbol sintáctico (AST).
+4. Devuelve un objeto SelectStmtNode al executor.
 
-Etapa 5: isam.py, avl.py, bplustree.py, extendible_hash.py, rtree.py
-Se ejecutan las búsquedas en los archivos correspondientes.
+Etapa 3 — Executor (plan de ejecución)
+------------------------------------------------------------
+El executor analiza el AST y define qué índice usar:
 
-Etapa 6: executor
-Se combinan los resultados con operadores AND y OR.
+- Texto → ISAM  
+- Numérico o rango → AVL o B+Tree  
+- Clave hash → Extendible Hashing  
+- Coordenadas → R-Tree
 
-Etapa 7: executor
-Se filtran las columnas indicadas en el SELECT.
+Ejemplo:
+[PLAN] Usando ISAM para búsqueda por texto (city = 'Lima')
+[PLAN] Usando AVL para búsqueda por comparación (aggregate_rating > 4.0)
 
-Etapa 8: server.py
-Se devuelve la respuesta en formato JSON.
+Etapa 4 — IndexManager
+------------------------------------------------------------
+El IndexManager coordina la ejecución:
+- Reabre los índices desde disco.
+- Ejecuta las búsquedas.
+- Devuelve los resultados parciales al executor.
 
-Etapa 9: frontend.html, style.css, script.js
-Se muestra la tabla con los resultados en la interfaz web.
+Etapa 5 — Combinación de Resultados
+------------------------------------------------------------
+- Operador AND → Intersección de resultados.
+- Operador OR → Unión sin duplicados.
+
+Etapa 6 — Proyección de Columnas
+------------------------------------------------------------
+Se devuelven únicamente las columnas del SELECT.
+
+Etapa 7 — Envío de respuesta al frontend
+------------------------------------------------------------
+El backend genera una respuesta JSON:
+
+{
+  "status": "OK",
+  "plan": "Usando ISAM y AVL",
+  "results": [
+    {"restaurant_name": "La Lucha", "city": "Lima", "aggregate_rating": 4.5},
+    {"restaurant_name": "Panchita", "city": "Lima", "aggregate_rating": 4.2}
+  ]
+}
+
+El frontend renderiza esta respuesta en una tabla HTML con desplazamiento horizontal.
 
 ------------------------------------------------------------
 
-EJEMPLO COMPLETO
+## 📊 Ejemplo de Ejecución Completa
 
 Consulta:
-SELECT *
-FROM restaurants
+SELECT * 
+FROM restaurants 
 WHERE city = "Taguig City" AND aggregate_rating > 4.0;
-
-Flujo de ejecución:
-1. El parser genera un nodo AND con dos condiciones.
-2. El executor selecciona ISAM (para texto) y AVL (para comparación).
-3. IndexManager ejecuta ambas búsquedas y combina los resultados.
-4. Se aplica la proyección SELECT *.
-5. El servidor envía los resultados en formato JSON al frontend.
 
 Salida esperada:
 [PLAN] Usando ISAM para búsqueda por texto (city = 'Taguig City')
 [PLAN] Usando AVL para búsqueda por comparación (aggregate_rating > 4.0)
 [OK] 4 resultado(s) encontrados vía condición compuesta (AND)
-
-------------------------------------------------------------
-
 
 
 
