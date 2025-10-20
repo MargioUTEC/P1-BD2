@@ -45,40 +45,7 @@ Este proyecto busca demostrar eficiencia en las operaciones, claridad en la estr
 * **Rating Text:** Nivel de calificación textual.  
 * **Votes:** Total de votos recibidos.  
 
----
 
-##  Arquitectura General del Sistema
-
-El sistema Mini-DB combina varios componentes para ofrecer una ejecución de consultas SQL sobre archivos físicos con **índices eficientes**.
-
-┌────────────────────────────┐
-│ Usuario (SQL) │
-└─────────────┬──────────────┘
-│
-▼
-┌──────────────────┐
-│ Parser SQL │
-└──────────────────┘
-│
-▼
-┌──────────────────┐
-│ Executor │
-└──────────────────┘
-│
-▼
-┌──────────────────┐
-│ IndexManager │
-└──────────────────┘
-┌─────────┬─────────┬─────────┬─────────┬─────────┐
-│ ISAM │ AVL │ B+Tree │ ExtHash│ R-Tree │
-└─────────┴─────────┴─────────┴─────────┴─────────┘
-│
-▼
-┌──────────────────┐
-│ Archivos .dat │
-└──────────────────┘
-
----
 
 ##  Estructuras de Índices Implementadas
 
@@ -94,7 +61,6 @@ Cada estructura se guarda en archivos binarios independientes y es administrada 
 
 ---
 
-```text
 PASOS DE EJECUCIÓN
 
 1. Inicializar índices y cargar dataset
@@ -216,6 +182,6 @@ CONCLUSIÓN
 
 Mini-DB demuestra cómo las técnicas de organización e indexación de archivos pueden integrarse en un motor funcional.
 Gracias a la combinación de ISAM, AVL, B+-Tree, Extendible Hashing y R-Tree, el sistema soporta consultas textuales, numéricas y espaciales con operadores lógicos (AND, OR), ofreciendo una arquitectura completa, escalable y extensible.
-```
+
 
 
