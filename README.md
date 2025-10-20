@@ -61,9 +61,9 @@ Cada estructura se guarda en archivos binarios independientes y es administrada 
 
 ------------------------------------------------------------
 
-## 🚀 Ejecución del Sistema
+##  Ejecución del Sistema
 
-1️⃣ Iniciar los índices y preparar el entorno
+ Iniciar los índices y preparar el entorno
 ------------------------------------------------------------
 Antes de ejecutar la interfaz, inicializa o reabre los índices persistentes.  
 Desde la raíz del proyecto, ejecutar:
@@ -85,7 +85,7 @@ Salida esperada:
 
 ------------------------------------------------------------
 
-2️⃣ Levantar el servidor backend
+ Levantar el servidor backend
 ------------------------------------------------------------
 Ejecutar el servidor Flask:
 
@@ -103,7 +103,7 @@ Responsabilidades del backend:
 
 ------------------------------------------------------------
 
-3️⃣ Acceder al frontend
+ Acceder al frontend
 ------------------------------------------------------------
 Abrir en el navegador:
 http://127.0.0.1:8000
@@ -115,7 +115,7 @@ La interfaz presenta tres secciones:
 
 ------------------------------------------------------------
 
-## 💻 Flujo de Ejecución Completo
+##  Flujo de Ejecución Completo
 
 Cuando el usuario ejecuta una consulta SQL desde el frontend, el flujo es:
 
@@ -181,7 +181,7 @@ El frontend renderiza esta respuesta en una tabla HTML con desplazamiento horizo
 
 ------------------------------------------------------------
 
-## 📊 Ejemplo de Ejecución Completa
+##  Ejemplo de Ejecución Completa
 
 Consulta:
 SELECT * 
