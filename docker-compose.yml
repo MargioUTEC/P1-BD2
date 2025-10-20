@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minidb_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./test_parser/data:/app/test_parser/data
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: minidb_frontend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - backend
+    environment:
+      - BACKEND_URL=http://backend:8000
+    restart: always

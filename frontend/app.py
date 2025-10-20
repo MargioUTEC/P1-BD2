@@ -11,7 +11,7 @@ from pathlib import Path
 
 app = FastAPI(title="Frontend - MiniDB Studio")
 
-BACKEND_URL = "http://127.0.0.1:8000"  # URL del backend principal
+BACKEND_URL = "http://minidb_backend:8000"
 
 # ------------------------------------------------
 # Archivos estáticos y CORS

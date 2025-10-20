@@ -4,6 +4,7 @@ from test_parser.core.parser.ast_nodes import (
     InsertNode, DeleteNode, SelectNode, SelectSpatialNode,
     ConditionNode, BetweenConditionNode, SelectWhereNode, ExplainNode
 )
+from test_parser.core.parser.ast_nodes import ConditionComplexNode
 
 
 class ParserSQL:
@@ -40,7 +41,6 @@ def _strip_quotes(s: str):
 
 def _to_str_type(x):
     """Convierte Tree/Token/str a un string final de tipo (INT, VARCHAR[20], ARRAY[FLOAT])."""
-    from lark import Tree, Token
     if isinstance(x, Tree):
         if x.children:
             return _to_str_type(x.children[0])
@@ -139,7 +139,7 @@ class SQLTransformer(Transformer):
           CREATE TABLE restaurants USING ALL FROM FILE "Dataset.csv"
           CREATE TABLE restaurants USING ISAM, HASH, RTREE FROM FILE "Dataset.csv"
         """
-        from lark import Tree, Token
+
 
         try:
             name = None
@@ -234,8 +234,6 @@ class SQLTransformer(Transformer):
 
     # ---------- SELECT ----------
     def select_stmt(self, children):
-        from test_parser.core.parser.ast_nodes import SelectWhereNode
-        from lark import Token
 
         columns = children[0]
         table = str(children[1]) if isinstance(children[1], Token) else str(children[1])
@@ -281,14 +279,13 @@ class SQLTransformer(Transformer):
         return BetweenConditionNode(str(_tokval(col)), v1, v2)
 
     # ==========================================================
-    # 🔹 Condición compuesta: A AND B / A OR B
+    #  Condición compuesta: A AND B / A OR B
     # ==========================================================
     def condition_complex(self, children):
         """
         children = [condition1, 'AND', condition2, 'OR', condition3, ...]
         Se convierte en árbol binario encadenado de ConditionComplexNode.
         """
-        from test_parser.core.parser.ast_nodes import ConditionComplexNode
 
         if len(children) < 3:
             return children[0]
@@ -326,7 +323,6 @@ class SQLTransformer(Transformer):
         """
         Maneja cadenas de condiciones unidas con AND.
         """
-        from test_parser.core.parser.ast_nodes import ConditionComplexNode
 
         left = children[0]
         right = children[1] if len(children) > 1 else None
@@ -338,7 +334,6 @@ class SQLTransformer(Transformer):
         """
         Maneja cadenas de condiciones unidas con OR.
         """
-        from test_parser.core.parser.ast_nodes import ConditionComplexNode
 
         left = children[0]
         right = children[1] if len(children) > 1 else None

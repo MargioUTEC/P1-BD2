@@ -539,6 +539,18 @@
       "Aggregate_rating": 3.6
     }
   },
+  "45": {
+    "coords": [
+      121.0534998,
+      14.54565535
+    ],
+    "payload": {
+      "Restaurant_ID": 6310406,
+      "Restaurant_Name": "The Food Hall by Todd English",
+      "City": "Taguig City",
+      "Aggregate_rating": 4.5
+    }
+  },
   "46": {
     "coords": [
       -43.191,
