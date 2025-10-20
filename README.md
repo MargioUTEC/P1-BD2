@@ -1,16 +1,16 @@
-#  Mini-DB: Organización e Indexación Eficiente de Archivos con Datos Multidimensionales
+# 🧩 Mini-DB: Organización e Indexación Eficiente de Archivos con Datos Multidimensionales
 
-##  Descripción del Proyecto
+## 📘 Descripción del Proyecto
 
-El objetivo de este proyecto es diseñar y desarrollar un **mini gestor de bases de datos** capaz de aplicar técnicas eficientes de **organización, almacenamiento e indexación de archivos físicos**, incluyendo soporte para **datos espaciales**.  
+Este proyecto implementa un **mini gestor de bases de datos** diseñado para demostrar técnicas eficientes de **organización, almacenamiento e indexación de archivos físicos**, incluyendo soporte para **datos espaciales (R-Tree)**.
 
-El sistema implementa operaciones fundamentales como **inserción, eliminación y búsqueda**, trabajando sobre archivos planos con datos reales extraídos de un [dataset de restaurantes](https://www.kaggle.com/datasets/mohdshahnawazaadil/restaurant-dataset) disponible en Kaggle.  
+El sistema soporta operaciones fundamentales como **inserción, eliminación y búsqueda** sobre archivos planos con datos reales extraídos del dataset de [Restaurantes en Kaggle](https://www.kaggle.com/datasets/mohdshahnawazaadil/restaurant-dataset).
 
-Este proyecto busca demostrar eficiencia en las operaciones, claridad en la estructura del código y una adecuada documentación técnica que detalle las decisiones de diseño y los resultados obtenidos.
+El proyecto integra un **backend en FastAPI** y un **frontend web interactivo**, ambos completamente desplegables con **Docker Compose**.
 
 ---
 
-##  Integrantes del Equipo 8
+## 👥 Integrantes del Equipo 8
 
 | Nombre                   | Participación |
 | ------------------------ | -------------- |
@@ -22,176 +22,225 @@ Este proyecto busca demostrar eficiencia en las operaciones, claridad en la estr
 
 ---
 
-##  Atributos del Dataset Utilizado
+## 🧠 Atributos del Dataset
 
-* **Restaurant ID:** Identificador único para cada restaurante.  
-* **Restaurant Name:** Nombre del restaurante.  
-* **Country Code:** Código del país donde se encuentra.  
-* **City:** Ciudad donde está ubicado.  
-* **Address:** Dirección exacta.  
-* **Locality:** Localidad general.  
-* **Locality Verbose:** Descripción detallada.  
-* **Longitude / Latitude:** Coordenadas geográficas.  
-* **Cuisines:** Tipo de cocina ofrecida.  
-* **Average Cost for Two:** Costo promedio para dos personas.  
-* **Currency:** Moneda de los precios.  
-* **Has Table Booking:** Indica si acepta reservas.  
-* **Has Online Delivery:** Indica si ofrece delivery.  
-* **Is Delivering Now:** Si entrega actualmente.  
-* **Switch to Order Menu:** Si permite pedidos online.  
-* **Price Range:** Nivel de precios.  
-* **Aggregate Rating:** Calificación promedio.  
-* **Rating Color:** Color del nivel de calificación.  
-* **Rating Text:** Nivel de calificación textual.  
-* **Votes:** Total de votos recibidos.  
+| Atributo | Descripción |
+|-----------|-------------|
+| **Restaurant ID** | Identificador único |
+| **Restaurant Name** | Nombre del restaurante |
+| **City** | Ciudad donde se encuentra |
+| **Longitude / Latitude** | Coordenadas geográficas |
+| **Cuisines** | Tipo de cocina |
+| **Average Cost for Two** | Costo promedio para dos personas |
+| **Aggregate Rating** | Calificación promedio |
+| **Votes** | Total de votos recibidos |
 
+> El sistema utiliza principalmente estos campos para construir índices de búsqueda eficientes.
 
+---
 
-##  Estructuras de Índices Implementadas
+## ⚙️ Estructuras de Índices Implementadas
 
 | Estructura | Propósito | Tipo de datos |
 |-------------|------------|----------------|
-| **ISAM** | Índice secuencial para búsquedas exactas | Cadenas (`city`, `name`) |
+| **ISAM** | Búsquedas exactas secuenciales | Cadenas (`city`, `name`) |
 | **AVL Tree** | Árbol balanceado para comparaciones | Numéricos (`aggregate_rating`) |
-| **B+-Tree** | Árbol de búsqueda por rangos optimizado para disco | Numéricos o alfabéticos |
-| **Extendible Hashing** | Acceso directo dinámico mediante hashing | Claves únicas (`restaurant_id`) |
+| **B+ Tree** | Árbol optimizado para rangos en disco | Numéricos o alfabéticos |
+| **Extendible Hashing** | Acceso directo dinámico | Claves únicas (`restaurant_id`) |
 | **R-Tree** | Índice espacial multidimensional | Coordenadas (`longitude`, `latitude`) |
 
-Cada estructura se guarda en archivos binarios independientes y es administrada por `IndexManager`.
+Todos los índices se almacenan en archivos binarios independientes y son gestionados por el módulo `IndexManager`.
 
-------------------------------------------------------------
+---
 
-##  Ejecución del Sistema
+## 🚀 Guía de Instalación y Ejecución
 
- Iniciar los índices y preparar el entorno
-------------------------------------------------------------
-Antes de ejecutar la interfaz, inicializa o reabre los índices persistentes.  
+### 🔧 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/MargioUTEC/P1-BD2.git
+cd P1-BD2
+```
+
+> Asegúrate de tener instalado **Docker Desktop** (Windows/Mac) o **Docker Engine + Docker Compose** (Linux).
+
+---
+
+### 🧱 2. Estructura del proyecto
+
+```
+db2_proyecto/
+│
+├── test_parser/              ← Backend (FastAPI)
+│   ├── app.py
+│   ├── core/
+│   ├── indexes/
+│   ├── storage/
+│   ├── data/
+│   └── Dockerfile
+│
+├── frontend/                 ← Frontend (FastAPI + HTML)
+│   ├── app.py
+│   ├── static/
+│   └── Dockerfile
+│
+└── docker-compose.yml
+```
+
+---
+
+### ▶️ 3. Construir y levantar los contenedores
+
 Desde la raíz del proyecto, ejecutar:
 
-python -m tiempo.test_tiempo
+```bash
+docker compose up --build
+```
 
-Este comando:
-- Carga el dataset Dataset.csv.
-- Construye o reabre todos los índices físicos.
-- Verifica integridad y persistencia de datos.
+Esto:
+- Construye las imágenes de backend y frontend.
+- Inicia ambos contenedores en red compartida.
+- Expone los servicios en:
 
-Salida esperada:
-[INIT] Cargando IndexManager...
-[INIT] ISAM inicializado correctamente.
-[INIT] Extendible Hash reabierto correctamente.
-[INIT] AVL reabierto correctamente.
-[INIT] B+-Tree reabierto correctamente.
-[INFO] R-Tree reabierto con 50 registros.
+| Servicio | Puerto | Descripción |
+|-----------|--------|-------------|
+| **Backend (FastAPI)** | `8000` | API que ejecuta consultas SQL e interactúa con los índices |
+| **Frontend (FastAPI)** | `5000` | Interfaz web para enviar consultas y visualizar resultados |
 
-------------------------------------------------------------
+---
 
- Levantar el servidor backend
-------------------------------------------------------------
-Ejecutar el servidor Flask:
+### 🌐 4. Acceso a la aplicación
 
-python server.py
+- **Frontend:**  
+  👉 [http://localhost:5000](http://localhost:5000)
 
-El backend se ejecutará en:
-http://127.0.0.1:8000
+- **Backend (API):**  
+  👉 [http://localhost:8000](http://localhost:8000)
 
-Responsabilidades del backend:
-- Recibir las consultas SQL enviadas por el frontend.
-- Interpretarlas mediante el parser SQL.
-- Generar el plan de ejecución.
-- Delegar búsquedas al IndexManager.
-- Combinar resultados y devolverlos en formato JSON.
+> Si todo funciona correctamente, deberías ver:  
+> `{"message":"MiniDB Backend operativo ✅"}`
 
-------------------------------------------------------------
+---
 
- Acceder al frontend
-------------------------------------------------------------
-Abrir en el navegador:
-http://127.0.0.1:8000
+### 🧩 5. Ejecución manual (sin Docker, opcional)
 
-La interfaz presenta tres secciones:
-- Consola SQL: permite escribir consultas directamente.
-- Búsqueda guiada: filtra registros por campos comunes.
-- Explorador de índices: visualiza estructuras internas (ISAM, AVL, etc.).
+Si deseas probar el proyecto localmente:
 
-------------------------------------------------------------
+#### 🖥️ Backend
+```bash
+cd test_parser
+pip install -r requirements.txt
+uvicorn app:app --reload --port 8000
+```
 
-##  Flujo de Ejecución Completo
+#### 🌐 Frontend
+```bash
+cd frontend
+pip install fastapi uvicorn httpx
+uvicorn app:app --reload --port 5000
+```
 
-Cuando el usuario ejecuta una consulta SQL desde el frontend, el flujo es:
+---
 
-Etapa 1 — Frontend
-------------------------------------------------------------
-1. El usuario ingresa la consulta:
+## 🔄 Flujo de Ejecución
+
+### 1️⃣ Frontend
+El usuario ingresa una consulta SQL en la consola web, por ejemplo:
+
+```sql
 SELECT restaurant_name, city, aggregate_rating 
 FROM restaurants 
 WHERE city = "Lima" AND aggregate_rating > 4.0;
+```
 
-2. La consulta se envía al backend mediante una solicitud HTTP (POST).
+El `frontend/app.py` envía esta consulta a:
+```
+POST /api/run → http://backend:8000/query
+```
 
-Etapa 2 — Parser SQL (backend)
-------------------------------------------------------------
-1. parser_sql convierte la cadena SQL en tokens (SELECT, FROM, WHERE).
-2. Valida la estructura según grammar_sql.lark.
-3. Construye un árbol sintáctico (AST).
-4. Devuelve un objeto SelectStmtNode al executor.
+---
 
-Etapa 3 — Executor (plan de ejecución)
-------------------------------------------------------------
-El executor analiza el AST y define qué índice usar:
+### 2️⃣ Parser SQL (backend)
+El módulo `parser_sql.py`:
+- Tokeniza y valida la sintaxis SQL.
+- Construye un **árbol sintáctico (AST)** con `lark`.
+- Devuelve un objeto `SelectStmtNode`.
 
-- Texto → ISAM  
-- Numérico o rango → AVL o B+Tree  
-- Clave hash → Extendible Hashing  
-- Coordenadas → R-Tree
+Ejemplo de log:
+```
+[SELECT FROM restaurants]
+[DEBUG] Nodo SELECT detectado → using_index=None
+```
 
-Ejemplo:
-[PLAN] Usando ISAM para búsqueda por texto (city = 'Lima')
-[PLAN] Usando AVL para búsqueda por comparación (aggregate_rating > 4.0)
+---
 
-Etapa 4 — IndexManager
-------------------------------------------------------------
-El IndexManager coordina la ejecución:
-- Reabre los índices desde disco.
-- Ejecuta las búsquedas.
-- Devuelve los resultados parciales al executor.
+### 3️⃣ Planificador de ejecución
+El **Executor** determina la estructura adecuada según el tipo de campo:
 
-Etapa 5 — Combinación de Resultados
-------------------------------------------------------------
-- Operador AND → Intersección de resultados.
-- Operador OR → Unión sin duplicados.
+| Tipo de campo | Estructura usada |
+|----------------|------------------|
+| Texto (`city`, `name`) | ISAM |
+| Numérico (`aggregate_rating`) | AVL o B+Tree |
+| Clave (`restaurant_id`) | Extendible Hashing |
+| Coordenadas (`longitude`, `latitude`) | R-Tree |
 
-Etapa 6 — Proyección de Columnas
-------------------------------------------------------------
-Se devuelven únicamente las columnas del SELECT.
+---
 
-Etapa 7 — Envío de respuesta al frontend
-------------------------------------------------------------
-El backend genera una respuesta JSON:
+### 4️⃣ Ejemplo de Resultado
 
+```json
 {
   "status": "OK",
   "plan": "Usando ISAM y AVL",
-  "results": [
+  "data": [
     {"restaurant_name": "La Lucha", "city": "Lima", "aggregate_rating": 4.5},
     {"restaurant_name": "Panchita", "city": "Lima", "aggregate_rating": 4.2}
   ]
 }
+```
 
-El frontend renderiza esta respuesta en una tabla HTML con desplazamiento horizontal.
+El frontend renderiza los resultados en una tabla con scroll horizontal.
 
-------------------------------------------------------------
+---
 
-##  Ejemplo de Ejecución Completa
+## 🧠 Consideraciones Técnicas
 
-Consulta:
-SELECT * 
-FROM restaurants 
-WHERE city = "Taguig City" AND aggregate_rating > 4.0;
+- Los índices son **persistentes** y se guardan en `test_parser/data/`.
+- `docker-compose.yml` monta los volúmenes locales para conservar los índices generados.
+- `Dockerfile` del backend instala librerías especializadas (`rtree`, `shapely`, `lark==1.3.0`).
 
-Salida esperada:
-[PLAN] Usando ISAM para búsqueda por texto (city = 'Taguig City')
-[PLAN] Usando AVL para búsqueda por comparación (aggregate_rating > 4.0)
-[OK] 4 resultado(s) encontrados vía condición compuesta (AND)
+---
 
+## 🧰 Comandos Útiles
 
+| Acción | Comando |
+|--------|----------|
+| Reconstruir contenedores | `docker compose build` |
+| Iniciar servicios | `docker compose up` |
+| Detener servicios | `docker compose down` |
+| Ver logs de backend | `docker logs minidb_backend` |
+| Entrar al contenedor backend | `docker exec -it minidb_backend bash` |
 
+---
+
+## ✅ Estado Final Esperado
+
+```
+[INIT] ISAM inicializado correctamente.
+[INIT] Extendible Hash reabierto correctamente.
+[INIT] AVL reabierto correctamente.
+[INIT] B+-Tree reabierto correctamente.
+[INIT] R-Tree reabierto correctamente.
+INFO: Uvicorn running on http://0.0.0.0:8000
+```
+
+Navega a:
+- `http://localhost:5000` → Frontend operativo  
+- `http://localhost:8000` → Backend operativo ✅
+
+---
+
+## 📦 Créditos
+
+Proyecto desarrollado en el curso **Base de Datos II — UTEC 2025-2**,  
+demostrando el uso combinado de estructuras de acceso e indexación eficiente para consultas SQL sobre datos persistentes.
