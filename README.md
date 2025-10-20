@@ -239,8 +239,3 @@ Navega a:
 - `http://localhost:8000` → Backend operativo ✅
 
 ---
-
-## 📦 Créditos
-
-Proyecto desarrollado en el curso **Base de Datos II — UTEC 2025-2**,  
-demostrando el uso combinado de estructuras de acceso e indexación eficiente para consultas SQL sobre datos persistentes.
