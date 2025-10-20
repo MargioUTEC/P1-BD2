@@ -119,6 +119,17 @@ class BetweenConditionNode:
 # ----------------------------------------------------------
 
 @dataclass
+class ExplainNode:
+    analyze: bool
+    select_stmt: Any
+
+    def __repr__(self):
+        mode = "EXPLAIN ANALYZE" if self.analyze else "EXPLAIN"
+        return f"<{mode} {self.select_stmt}>"
+
+# ----------------------------------------------------------
+
+@dataclass
 class ValueNode:
     """Nodo genérico para representar valores (números, strings, arrays)."""
     value: Any
@@ -142,18 +153,16 @@ class ArrayNode:
 
 @dataclass
 class SelectWhereNode:
-    """
-    Sentencia SELECT ... FROM ... WHERE ...
-    Compatible con condiciones simples, BETWEEN, IN (espacial) o compuestas.
-    """
     table_name: str
-    condition: Optional[Any] = None
     columns: Optional[List[str]] = None
+    condition: Optional[Any] = None
+    using_index: Optional[str] = None
 
     def __repr__(self):
         cols = ", ".join(self.columns) if self.columns else "*"
         cond = f" WHERE {self.condition}" if self.condition else ""
-        return f"<SELECT {cols} FROM {self.table_name}{cond}>"
+        using = f" USING {self.using_index}" if self.using_index else ""
+        return f"<SELECT {cols} FROM {self.table_name}{using}{cond}>"
 
 
 # ----------------------------------------------------------

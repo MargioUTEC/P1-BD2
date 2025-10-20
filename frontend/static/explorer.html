@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Mini-DB Studio — Explorador de índices</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="./style.css" rel="stylesheet" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Mini-DB Studio</div>
+    <nav class="tabs">
+      <a href="index.html" class="tab">Consola SQL</a>
+      <a href="search.html" class="tab">Búsqueda guiada</a>
+      <a href="explorer.html" class="tab active">Explorador de índices</a>
+    </nav>
+    <div class="right-actions">
+      <label class="toggle">
+        <input type="checkbox" id="mockToggle" />
+        <span>Mock</span>
+      </label>
+    </div>
+  </header>
+
+  <main class="layout cols-3">
+    <section class="panel">
+      <div class="panel-header"><h2>ISAM</h2></div>
+      <div class="kv">
+        <div><span>Páginas</span><b id="isamPages">—</b></div>
+      </div>
+      <div class="small muted">Recomendado: búsquedas textuales (name, city).</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><h2>Hash Extensible</h2></div>
+      <div class="kv">
+        <div><span>Profundidad global</span><b id="hashDepth">—</b></div>
+        <div><span>Entradas</span><b id="hashEntries">—</b></div>
+        <div><span>Lecturas</span><b id="hashReads">—</b></div>
+        <div><span>Escrituras</span><b id="hashWrites">—</b></div>
+      </div>
+      <div class="small muted">Recomendado: clave exacta (restaurant_id).</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><h2>R-Tree</h2></div>
+      <div class="kv">
+        <div><span>Puntos</span><b id="rtreePoints">—</b></div>
+      </div>
+      <div class="small muted">Recomendado: búsquedas por coordenadas o radio.</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><h2>AVL</h2></div>
+      <div class="kv">
+        <div><span>Registros</span><b id="avlCount">—</b></div>
+      </div>
+      <div class="small muted">Recomendado: comparaciones en atributos numéricos.</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><h2>B+Tree</h2></div>
+      <div class="kv">
+        <div><span>Persistente</span><b>sí</b></div>
+      </div>
+      <div class="small muted">Recomendado: rangos por ID (BETWEEN).</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><h2>Acciones</h2></div>
+      <div class="inline-actions">
+        <button id="btnRefresh" class="btn">Refrescar</button>
+      </div>
+      <div class="panel-subsection">
+        <h3>Mensajes</h3>
+        <div id="status" class="alerts"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./script.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      App.initExplorerPage({
+        mockToggleId: 'mockToggle',
+        isamPagesId: 'isamPages',
+        hashDepthId: 'hashDepth',
+        hashEntriesId: 'hashEntries',
+        hashReadsId: 'hashReads',
+        hashWritesId: 'hashWrites',
+        rtreePointsId: 'rtreePoints',
+        avlCountId: 'avlCount',
+        statusId: 'status',
+        refreshBtnId: 'btnRefresh'
+      });
+    });
+  </script>
+</body>
+</html>

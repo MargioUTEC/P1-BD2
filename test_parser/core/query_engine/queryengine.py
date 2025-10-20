@@ -1,7 +1,7 @@
 from test_parser.core.parser.parser_sql import ParserSQL
 from test_parser.core.parser.ast_nodes import (
     CreateFromFileNode, InsertNode, DeleteNode,
-    SelectNode, SelectWhereNode, ConditionComplexNode, SelectSpatialNode
+    SelectNode, SelectWhereNode, ConditionComplexNode, SelectSpatialNode, ExplainNode
 )
 from test_parser.core.index_manager import IndexManager
 from test_parser.indexes.isam_s.isam import Record
@@ -20,6 +20,82 @@ class QueryEngine:
     def __init__(self):
         self.parser = ParserSQL()
         self.index_manager = IndexManager()
+
+    # ------------------------------------------------------
+    # para explain
+    # ------------------------------------------------------
+    def _execute_explain(self, select_stmt, analyze=False):
+        """
+        Genera un plan de ejecución similar a PostgreSQL.
+        Si analyze=True, ejecuta realmente la consulta y mide el tiempo.
+        """
+        import time
+        cond = getattr(select_stmt, "condition", None)
+        forced_index = getattr(select_stmt, "using_index", None)
+        table_name = getattr(select_stmt, "table_name", "")
+
+        # --- PLAN lógico: elegir índice apropiado ---
+        plan_info = {
+            "plan": None,
+            "filter": str(cond) if cond else "N/A",
+            "index_used": None,
+            "estimated_cost": 0.0,
+            "rows": 0,
+            "execution_time_ms": 0.0
+        }
+
+        start_time = time.time()
+
+        # --- Determinar índice usado ---
+        if forced_index:
+            plan_info["index_used"] = forced_index
+            plan_info["plan"] = f"Index Scan using {forced_index} on {table_name}"
+        elif cond and hasattr(cond, "attribute"):
+            attr = cond.attribute.lower()
+            if attr in ["city", "name"]:
+                plan_info["index_used"] = "ISAM"
+                plan_info["plan"] = f"Index Scan using ISAM on {table_name}"
+            elif attr in ["rating", "aggregate_rating", "votes", "average_cost_for_two"]:
+                plan_info["index_used"] = "AVL"
+                plan_info["plan"] = f"Index Scan using AVL on {table_name}"
+            elif "id" in attr:
+                plan_info["index_used"] = "B+Tree"
+                plan_info["plan"] = f"Index Scan using B+Tree on {table_name}"
+            elif attr in ["coords", "longitude", "latitude"]:
+                plan_info["index_used"] = "R-Tree"
+                plan_info["plan"] = f"Spatial Index Scan using R-Tree on {table_name}"
+            else:
+                plan_info["index_used"] = "Sequential"
+                plan_info["plan"] = f"Seq Scan on {table_name}"
+        else:
+            plan_info["plan"] = f"Seq Scan on {table_name}"
+            plan_info["index_used"] = "Sequential"
+
+        # --- Si es EXPLAIN ANALYZE, ejecutar realmente ---
+        results = []
+        if analyze:
+            results = self._evaluate_condition(cond) if cond else []
+            plan_info["rows"] = len(results)
+            plan_info["execution_time_ms"] = (time.time() - start_time) * 1000
+            plan_info["estimated_cost"] = round(plan_info["execution_time_ms"] * 0.02, 4)  # ejemplo simple
+
+        # --- Salida tipo PostgreSQL ---
+        print("\nQUERY PLAN")
+        print("-" * 60)
+        print(plan_info["plan"])
+        print(f"  Filter: {plan_info['filter']}")
+        print(f"  Index Used: {plan_info['index_used']}")
+        if analyze:
+            print(f"  Estimated Cost: {plan_info['estimated_cost']} ms")
+            print(f"  Rows Returned: {plan_info['rows']}")
+            print(f"  Execution Time: {plan_info['execution_time_ms']:.2f} ms")
+        else:
+            print("  (Analysis not executed)")
+        print("-" * 60)
+
+        # --- Retornar formato JSON para frontend ---
+        return plan_info
+
 
     # ------------------------------------------------------
     # Ejecutar múltiples sentencias (separadas por líneas)
@@ -66,22 +142,20 @@ class QueryEngine:
         # ======================================================
         # INSERT INTO ...
         # ======================================================
-        if isinstance(stmt, InsertNode):
-            print(f"\n[INSERT INTO {stmt.table_name}]")
-            try:
-                vals = stmt.values
-                rec = Record.from_minimal(
-                    restaurant_id=int(vals[0]),
-                    name=str(vals[1]),
-                    city=str(vals[2]),
-                    longitude=float(vals[3]),
-                    latitude=float(vals[4]),
-                    aggregate_rating=float(vals[5])
-                )
-                self.index_manager.insert(rec)
-                print("[OK] Registro insertado en todas las estructuras.")
-            except Exception as e:
-                print(f"[ERROR] Fallo al insertar: {e}")
+        elif isinstance(stmt, InsertNode):
+            print(f"[INSERT] Ejecutando INSERT en tabla {stmt.table_name}...")
+            if hasattr(self.index_manager, "insert_full"):
+                # Los valores vienen ya parseados como lista en stmt.values
+                values = stmt.values
+                if not values or len(values) != len(self.index_manager.all_columns):
+                    print(
+                        f"[WARN] INSERT con {len(values)} valores, se esperaban {len(self.index_manager.all_columns)}")
+                record_dict = dict(zip(self.index_manager.all_columns, values))
+                self.index_manager.insert_full(record_dict)
+                print("[OK] Registro insertado exitosamente en archivo base e índices.")
+            else:
+                print("[ERROR] insert_full() no disponible en IndexManager.")
+
             return
 
         # ======================================================
@@ -105,14 +179,41 @@ class QueryEngine:
             return
 
         # ======================================================
+        # EXPLAIN [ANALYZE]
+        # ======================================================
+        if isinstance(stmt, ExplainNode):
+            print(f"\n[EXPLAIN MODE ACTIVATED] → ANALYZE={stmt.analyze}")
+            select_stmt = stmt.select_stmt
+            analyze = stmt.analyze
+            return self._execute_explain(select_stmt, analyze)
+
+
+        if isinstance(stmt, ExplainNode):
+            print("\n[EXPLAIN MODE ACTIVATED]")
+            select_stmt = stmt.select_stmt
+            analyze = stmt.analyze
+            return self._execute_explain(select_stmt, analyze)
+
+        # ======================================================
         # SELECT ...
         # ======================================================
 
         if isinstance(stmt, (SelectNode, SelectWhereNode)):
+            self._last_select_stmt = stmt
             table_name = getattr(stmt, "table_name", getattr(stmt, "table", ""))
             print(f"\n[SELECT FROM {table_name}]")
 
             cond = getattr(stmt, "condition", None)
+            # Detectar índice forzado por el usuario
+            forced_index = getattr(stmt, "using_index", None)
+            print(f"[DEBUG] Nodo SELECT detectado → using_index={getattr(stmt, 'using_index', None)}")
+
+            if forced_index:
+                self.index_manager.forced_index = forced_index
+                print(f"[FORCE INDEX] Usuario especificó usar {forced_index}")
+            else:
+                self.index_manager.forced_index = None
+
             if cond is None:
                 print("[INFO] SELECT * no implementado. Usa WHERE.")
                 return
@@ -210,6 +311,21 @@ class QueryEngine:
                 print(f"[WARN] Operador lógico desconocido: {cond.operator}")
                 return []
 
+        # Sobrescribir elección si el usuario forzó un índice
+        forced = getattr(self.index_manager, "forced_index", None)
+        if forced:
+            print(f"[FORCED EXECUTION] Redirigiendo búsqueda a {forced} manualmente.")
+            res = self.index_manager.force_search(forced, cond)
+
+            # --- Si se devuelve un dict JSON desde force_search ---
+            if isinstance(res, dict):
+                status = res.get("status", "error")
+                msg = res.get("message", "")
+                print(msg)
+                if status != "success":
+                    return []  # evita romper flujo
+                return res.get("results", [])
+
         # ==============================
         # espacial -> R-Tree
         # ==============================
@@ -233,6 +349,16 @@ class QueryEngine:
                 city = val if attr == "city" else ""
                 print(f"[PLAN] Usando ISAM para búsqueda por texto ({attr} = '{val}')")
                 return self.index_manager.search_by_name(name.strip(), city.strip())
+
+            # 🔹 TEXTO genérico (sin índice) → scan secuencial sobre páginas ISAM
+            elif attr in ["rating_text", "cuisines", "currency", "rating_color", "address", "locality",
+                          "locality_verbose"]:
+                print(f"[PLAN] Búsqueda secuencial (texto) para {attr} {op} '{val}'")
+                try:
+                    return self.index_manager.search_text(attr, str(val), op or "=")
+                except Exception as e:
+                    print(f"[WARN] Error en búsqueda textual genérica: {e}")
+                    return []
 
             # AVL -> atributos numéricos
             elif attr in ["rating", "votes", "average_cost_for_two"]:
@@ -276,15 +402,27 @@ class QueryEngine:
         return []
 
     def _print_results(self, results, source=""):
+        if isinstance(results, dict):
+            ...
         if not results:
             print(f"[INFO] Sin resultados ({source}).")
             return
 
-        print(f"[OK] {len(results)} resultado(s) encontrados vía {source}:")
-        for r in results[:8]:
+        # 🔹 Recuperar columnas seleccionadas (si existen en el último stmt)
+        current_stmt = getattr(self, "_last_select_stmt", None)
+        selected_cols = getattr(current_stmt, "columns", None)
+        if selected_cols and selected_cols != ["*"]:
+            filtered_results = [
+                {k: v for k, v in r.items() if k in selected_cols} for r in results
+            ]
+        else:
+            filtered_results = results
+
+        print(f"[OK] {len(filtered_results)} resultado(s) encontrados vía {source}:")
+        for r in filtered_results[:8]:
             print(" ", r)
-        if len(results) > 8:
-            print(f" ... ({len(results) - 8} más omitidos)")
+        if len(filtered_results) > 8:
+            print(f" ... ({len(filtered_results) - 8} más omitidos)")
         print()
 
     def close(self):
@@ -292,13 +430,122 @@ class QueryEngine:
         self.index_manager.close()
         print("[OK] Todas las estructuras cerradas correctamente.")
 
+    def _estimate_cost(self, index_type: str, attr: str, total_rows: int = 10000, matched_rows: int = 0):
+        """
+        Simula el cálculo de costos como hace PostgreSQL.
+        Retorna un diccionario con startup_cost, total_cost, selectivity y estimated_time.
+        """
+        import random
+
+        # 1. Costos base (I/O + CPU)
+        startup_costs = {
+            "ISAM": 0.10,
+            "AVL": 0.20,
+            "HASH": 0.05,
+            "BTREE": 0.15,
+            "RTREE": 0.25,
+            "AUTO": 0.12,
+        }
+
+        io_cost_per_page = 0.002  # ms por página (simulado)
+        cpu_cost_per_tuple = 0.0005  # ms por fila
+
+        # 2. Selectividad estimada según atributo
+        selectivity_map = {
+            "id": 0.01,
+            "restaurant_id": 0.01,
+            "name": 0.05,
+            "city": 0.10,
+            "rating": 0.25,
+            "votes": 0.25,
+            "average_cost_for_two": 0.15,
+        }
+
+        selectivity = selectivity_map.get(attr.lower(), 0.20)
+
+        # 3. Estimar filas esperadas
+        estimated_rows = int(total_rows * selectivity)
+
+        # Si ya se conoce el número de filas reales (ANALYZE)
+        if matched_rows:
+            estimated_rows = matched_rows
+
+        # 4. Costos proporcionales
+        startup = startup_costs.get(index_type, 0.10)
+        total = startup + (estimated_rows * cpu_cost_per_tuple) + (estimated_rows * io_cost_per_page)
+        estimated_time = round(random.uniform(total * 0.5, total * 1.5), 4)
+
+        return {
+            "startup_cost": round(startup, 4),
+            "total_cost": round(total, 4),
+            "selectivity": round(selectivity, 3),
+            "estimated_rows": estimated_rows,
+            "estimated_time": estimated_time,
+        }
+
+    def run_query_with_options(self, sql: str, options: dict):
+        """
+        Ejecuta una query con opciones adicionales (índice forzado, modo, límites).
+        """
+        print("\n=== Ejecutando consulta con opciones ===")
+        print(f"SQL: {sql}")
+        print(f"Options: {options}")
+
+        force_index = (options.get("force_index") or "").upper()
+        field = options.get("force_field", "").lower()
+        mode = options.get("mode", "NORMAL").upper()
+
+        if mode == "EXPLAIN":
+            result = self.parser.parse(sql)
+            stmt = result[0] if isinstance(result, list) else result
+            if not isinstance(stmt, ExplainNode):
+                stmt = ExplainNode(analyze=False, select_stmt=stmt)
+            return self._execute_explain(stmt.select_stmt, analyze=False)
+
+        # En modo normal, ejecuta la query
+        result = self.parser.parse(sql)
+        stmts = result if isinstance(result, (list, tuple)) else [result]
+
+        for stmt in stmts:
+            # Si hay índice forzado, podemos sobreescribir temporalmente la selección automática
+            if force_index:
+                print(f"[FORCE INDEX] Se usará {force_index} para ejecutar la consulta.")
+                self.index_manager.forced_index = force_index
+            else:
+                self.index_manager.forced_index = None
+
+            self._execute(stmt)
+
+        return []
+
 
 if __name__ == "__main__":
     qe = QueryEngine()
     script = """
-    CREATE TABLE restaurants USING ISAM, HASH, RTREE, AVL, BTREE FROM FILE "Dataset.csv";
-    SELECT * FROM restaurants
-    WHERE city = "Taguig City" AND rating > 4.0 AND votes BETWEEN 100 AND 500;
-    """
+
+INSERT INTO restaurants VALUES (
+    9999991,
+    "Test Restaurant",
+    162,
+    "Lima",
+    "Av. Universitaria 1234",
+    "San Miguel",
+    "Lima Metropolitana",
+    77.032,
+    -12.046,
+    "Peruvian, Fast Food",
+    120,
+    "Peruvian Soles(S/)",
+    "Yes",
+    "No",
+    "No",
+    "No",
+    2,
+    4.5,
+    "Green",
+    "Very Good",
+    120
+);
+"""
     qe.run_script(script)
     qe.close()

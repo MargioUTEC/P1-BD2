@@ -1,0 +1,3 @@
+Restaurant ID,Restaurant Name,Country Code,City,Address,Locality,Locality Verbose,Longitude,Latitude,Cuisines,Average Cost for two,Currency,Has Table booking,Has Online delivery,Is delivering now,Switch to order menu,Price range,Aggregate rating,Rating color,Rating text,Votes
+9999998,Test Restaurant,162,Lima,Av. Universitaria 1234,San Miguel,Lima Metropolitana,77.032,-12.046,"Peruvian, Fast Food",120,Peruvian Soles(S/),Yes,No,No,No,2,4.5,Green,Very Good,120
+9999998,Test Restaurant,162,Lima,Av. Universitaria 1234,San Miguel,Lima Metropolitana,77.032,-12.046,"Peruvian, Fast Food",120,Peruvian Soles(S/),Yes,No,No,No,2,4.5,Green,Very Good,120

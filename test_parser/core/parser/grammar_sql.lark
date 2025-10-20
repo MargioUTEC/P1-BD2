@@ -10,13 +10,17 @@
 // 1. Sentencias principales
 // ----------------------------------------------------------
 
-?stmt: create_table
+?stmt: explain_stmt
+     | create_table
      | create_from_file
      | insert_into
      | delete_from
      | select_stmt
      | COMMENT
 
+explain_stmt: "EXPLAIN" analyze_opt select_stmt   -> explain_statement
+analyze_opt: "ANALYZE" -> analyze_true
+           |            -> analyze_false
 // ----------------------------------------------------------
 // 2. CREATE TABLE
 // ----------------------------------------------------------
@@ -50,8 +54,14 @@ create_from_file: "CREATE" "TABLE" CNAME [using_clause] "FROM" "FILE" ESCAPED_ST
 
 using_all: "ALL"
 using_list: index_type ("," index_type)*
-using_clause: "USING" (using_all | using_list)
-index_type: "ISAM" | "HASH" | "RTREE" | "BTREE" | "AVL"
+using_clause: "USING" index_type ("," index_type)*     -> using_clause_list
+ISAMKW: "ISAM"
+HASHKW: "HASH"
+AVLKW: "AVL"
+BTREEKW: "BTREE"
+RTREEKW: "RTREE"
+
+index_type: ISAMKW | HASHKW | AVLKW | BTREEKW | RTREEKW
 
 // ----------------------------------------------------------
 // 4. INSERT
@@ -66,11 +76,13 @@ insert_into: "INSERT" "INTO" CNAME "VALUES" "(" value ("," value)* ")"
 delete_from: "DELETE" "FROM" CNAME [where_clause]
 
 // ----------------------------------------------------------
-// 6. SELECT
+// 6. SELECT (extendido con USING)
 // ----------------------------------------------------------
 
-select_stmt: "SELECT" column_list "FROM" CNAME [where_clause]
+select_stmt: "SELECT" column_list "FROM" CNAME using_clause? where_clause?
+
 column_list: "*" | CNAME ("," CNAME)*
+
 
 // ----------------------------------------------------------
 // 7. WHERE / CONDICIONES (versión extendida)

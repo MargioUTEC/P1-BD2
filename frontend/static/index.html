@@ -1,53 +1,118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>DB2 Query Console</title>
+  <title>Mini-DB Studio — Consola SQL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="/static/style.css" rel="stylesheet" />
 </head>
 <body>
-  <header>
-    <h1>DB2 Query Console</h1>
+  <header class="topbar">
+    <div class="brand">Mini-DB Studio</div>
+    <nav class="tabs">
+      <a href="index.html" class="tab active">Consola SQL</a>
+      <a href="/static/search.html" class="tab">Búsqueda guiada</a>
+      <a href="explorer.html" class="tab">Explorador de índices</a>
+    </nav>
+    <div class="right-actions">
+      <label class="toggle">
+        <input type="checkbox" id="mockToggle" />
+        <span>Mock</span>
+      </label>
+    </div>
   </header>
 
-  <main>
-    <section class="query-panel">
-      <textarea id="sqlInput" placeholder="Escribe tu consulta SQL aquí..."></textarea>
-      <div class="buttons">
-        <button id="runBtn">▶ Ejecutar</button>
-        <button id="clearBtn">🧹 Limpiar</button>
+  <main class="layout cols-2">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Consulta</h2>
+        <div class="inline-actions">
+          <select id="indexHint" class="select">
+            <option value="">USING (auto)</option>
+            <option value="ISAM">USING ISAM</option>
+            <option value="AVL">USING AVL</option>
+            <option value="HASH">USING HASH</option>
+            <option value="BTREE">USING B+TREE</option>
+            <option value="RTREE">USING RTREE</option>
+          </select>
+          <button id="btnExplain" class="btn ghost">EXPLAIN</button>
+          <button id="btnRun" class="btn">Ejecutar</button>
+        </div>
+      </div>
+
+      <div class="editor" id="sqlEditor" contenteditable="true" spellcheck="false"
+           data-placeholder="Escribe tu consulta (ej.: SELECT * FROM restaurants USING ISAM WHERE city = 'Lima';)">
+      </div>
+
+      <div class="hints">
+        <details>
+          <summary>Ayuda rápida</summary>
+          <ul>
+            <li><code>CREATE TABLE restaurants USING ISAM, HASH, RTREE, AVL, BTREE FROM FILE "Dataset.csv";</code></li>
+            <li><code>SELECT * FROM restaurants WHERE city = "Lima";</code></li>
+            <li><code>SELECT * FROM restaurants USING AVL WHERE rating &gt;= 4.5;</code></li>
+            <li><code>INSERT INTO restaurants VALUES (... 21 columnas ...);</code></li>
+            <li><code>DELETE FROM restaurants WHERE restaurant_id = 12345;</code></li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="panel-subsection">
+        <h3>Logs</h3>
+        <div id="console" class="console"></div>
       </div>
     </section>
 
-    <section class="tabs">
-      <button class="tab active" data-tab="table">🧮 Resultados</button>
-      <button class="tab" data-tab="log">🧾 Log</button>
-    </section>
-
-    <section id="tableView" class="tab-content active">
-      <div class="toolbar">
-        <input type="search" id="searchBox" placeholder="Filtrar resultados..." />
-        <span id="rowCount" class="muted"></span>
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Resultados</h2>
+        <div class="inline-actions">
+          <label class="small">Filtrar columnas</label>
+          <select id="columnVisibility" multiple class="select multi"></select>
+        </div>
       </div>
-      <table id="resultsTable">
-        <thead></thead>
-        <tbody></tbody>
-      </table>
-      <div id="emptyState" class="empty">
-        <p>Ejecuta una consulta para ver los resultados aquí.</p>
-      </div>
-    </section>
 
-    <section id="logView" class="tab-content">
-      <pre id="logOutput"></pre>
+      <div id="resultToolbar" class="table-toolbar">
+        <input id="quickSearch" class="input" placeholder="Buscar en resultados…" />
+        <div class="segmented">
+          <button id="btn10" class="seg active" data-size="10">10</button>
+          <button id="btn25" class="seg" data-size="25">25</button>
+          <button id="btn50" class="seg" data-size="50">50</button>
+        </div>
+        <div class="pill" id="planBadge" hidden>PLAN: —</div>
+      </div>
+
+<!-- Sección de resultados -->
+<div id="tableWrap" class="table-wrap">
+  <div id="resultScroll" class="result-scroll">
+    <table id="resultTable" class="data-table">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="pager" class="pager"></div>
+</div>
+
     </section>
   </main>
 
-  <footer>
-    <p>Desarrollado con FastAPI · Proyecto DB2</p>
-  </footer>
-
-  <script src="/static/app.js"></script>
+  <script src="/static/script.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      App.initConsolePage({
+        editorId: 'sqlEditor',
+        runBtnId: 'btnRun',
+        explainBtnId: 'btnExplain',
+        indexHintId: 'indexHint',
+        consoleId: 'console',
+        table: { wrapId: 'tableWrap', tableId: 'resultTable', thead: 'thead', tbody: 'tbody', pagerId: 'pager' },
+        columnVisibilityId: 'columnVisibility',
+        quickSearchId: 'quickSearch',
+        planBadgeId: 'planBadge',
+        pageSizeButtons: ['btn10','btn25','btn50'],
+        mockToggleId: 'mockToggle'
+      });
+    });
+  </script>
 </body>
 </html>

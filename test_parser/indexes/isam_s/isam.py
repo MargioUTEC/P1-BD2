@@ -83,34 +83,47 @@ class Record:
     votes: int
     longitude: float
     latitude: float
+    locality: str = "N/A"
+    locality_verbose: str = "N/A"
+    switch_to_order_menu: bool = False
+    rating_color: str = "N/A"
 
-    # Campos de longitud fija razonables (ajústalos si quieres ahorrar espacio)
-    # name (64), city (48), address (96), cuisines (96), currency (16), rating_text (16)
     FORMAT = (
-        "<i"                        # restaurant_id
-        f"{NAME_BYTES}s"            # name
-        "i"                         # country_code
-        f"{CITY_BYTES}s"            # city
-        "96s"                       # address
-        "96s"                       # cuisines
-        "i"                         # avg_cost_for_two
-        "16s"                       # currency
-        "?" "?" "?"                 # has_table_booking, has_online_delivery, is_delivering_now
-        "i"                         # price_range
-        "d"                         # aggregate_rating
-        "16s"                       # rating_text
-        "i"                         # votes
-        "d" "d"                     # longitude, latitude
+        "<i"
+        f"{NAME_BYTES}s"
+        "i"
+        f"{CITY_BYTES}s"
+        "96s"
+        "96s"
+        "i"
+        "16s"
+        "?" "?" "?"
+        "i"
+        "d"
+        "16s"
+        "i"
+        "d" "d"
+        "64s"   # locality
+        "64s"   # locality_verbose
+        "?"     # switch_to_order_menu
+        "16s"   # rating_color
     )
     SIZE = struct.calcsize(FORMAT)
 
+    # =========================
+    # CONSTRUCTORES
+    # =========================
+
     @staticmethod
-    def from_minimal(restaurant_id: int, name: str, city: str,
-                     longitude: float, latitude: float, aggregate_rating: float) -> "Record":
-        """
-        Crea un Record válido a partir de datos mínimos (para INSERT manuales).
-        Rellena los campos faltantes con valores por defecto seguros.
-        """
+    def from_minimal(
+        restaurant_id: int,
+        name: str,
+        city: str,
+        longitude: float,
+        latitude: float,
+        aggregate_rating: float
+    ) -> "Record":
+        """Crea un Record válido con valores por defecto seguros."""
         return Record(
             restaurant_id=restaurant_id,
             name=name,
@@ -129,38 +142,48 @@ class Record:
             votes=0,
             longitude=longitude,
             latitude=latitude,
+            locality="N/A",
+            locality_verbose="N/A",
+            switch_to_order_menu=False,
+            rating_color="N/A"
         )
 
     @staticmethod
     def from_csv_row(row: List[str]) -> "Record":
-        # Columnas (índices según tu muestra):
-        # 0 id, 1 name, 2 country_code, 3 city, 4 address,
-        # 7 longitude, 8 latitude, 9 cuisines,
-        # 10 avg_cost, 11 currency, 12 has_table_booking, 13 has_online_delivery,
-        # 14 is_delivering_now, 16 price_range, 17 aggregate_rating,
-        # 19 rating_text, 20 votes
-        def yesno(x: str) -> bool: return x.strip().lower() == "yes"
+        """Crea un Record desde una fila completa del CSV."""
+        def yesno(x: str) -> bool:
+            return str(x).strip().lower() == "yes"
+
         return Record(
-            restaurant_id = int(row[0]),
-            name          = row[1],
-            country_code  = int(row[2]),
-            city          = row[3],
-            address       = row[4],
-            cuisines      = row[9],
-            avg_cost_for_two = int(row[10]),
-            currency         = row[11],
-            has_table_booking   = yesno(row[12]),
-            has_online_delivery = yesno(row[13]),
-            is_delivering_now   = yesno(row[14]),
-            price_range      = int(row[16]),
-            aggregate_rating = float(row[17]),
-            rating_text      = row[19],
-            votes            = int(row[20]),
-            longitude        = float(row[7]),
-            latitude         = float(row[8]),
+            restaurant_id=int(row[0]),
+            name=row[1],
+            country_code=int(row[2]),
+            city=row[3],
+            address=row[4],
+            locality=row[5],
+            locality_verbose=row[6],
+            longitude=float(row[7]),
+            latitude=float(row[8]),
+            cuisines=row[9],
+            avg_cost_for_two=int(row[10]),
+            currency=row[11],
+            has_table_booking=yesno(row[12]),
+            has_online_delivery=yesno(row[13]),
+            is_delivering_now=yesno(row[14]),
+            switch_to_order_menu=yesno(row[15]),
+            price_range=int(row[16]),
+            aggregate_rating=float(row[17]),
+            rating_color=row[18],
+            rating_text=row[19],
+            votes=int(row[20])
         )
 
+    # =========================
+    # SERIALIZACIÓN BINARIA
+    # =========================
+
     def pack(self) -> bytes:
+        """Empaqueta el registro completo a bytes."""
         return struct.pack(
             self.FORMAT,
             self.restaurant_id,
@@ -180,15 +203,20 @@ class Record:
             self.votes,
             self.longitude,
             self.latitude,
+            _pad(self.locality, 64),
+            _pad(self.locality_verbose, 64),
+            self.switch_to_order_menu,
+            _pad(self.rating_color, 16)
         )
 
     @staticmethod
     def unpack(data: bytes) -> "Record":
+        """Desempaqueta bytes en un objeto Record."""
         (rid, name_b, ccode, city_b, addr_b, cuis_b, avgc, curr_b,
-         tb, od, dn, pr, ar, rt_b, votes, lon, lat) = struct.unpack(Record.FORMAT, data)
+         tb, od, dn, pr, ar, rt_b, votes, lon, lat,
+         loc_b, locv_b, sw, col_b) = struct.unpack(Record.FORMAT, data)
 
-        def dec(b: bytes, n: Optional[int] = None) -> str:
-            # decodifica en utf-8 y remueve espacios y NULes de la derecha
+        def dec(b: bytes) -> str:
             return b.decode("utf-8", errors="ignore").rstrip("\x00 ").strip()
 
         return Record(
@@ -209,6 +237,140 @@ class Record:
             votes=votes,
             longitude=lon,
             latitude=lat,
+            locality=dec(loc_b),
+            locality_verbose=dec(locv_b),
+            switch_to_order_menu=sw,
+            rating_color=dec(col_b)
+        )
+
+    @staticmethod
+    def from_minimal(
+            restaurant_id: int,
+            name: str,
+            city: str,
+            longitude: float,
+            latitude: float,
+            aggregate_rating: float
+    ) -> "Record":
+        """Crea un Record válido con valores por defecto seguros."""
+        return Record(
+            restaurant_id=restaurant_id,
+            name=name,
+            country_code=0,
+            city=city,
+            address="N/A",
+            cuisines="N/A",
+            avg_cost_for_two=0,
+            currency="PESO",
+            has_table_booking=False,
+            has_online_delivery=False,
+            is_delivering_now=False,
+            price_range=0,
+            aggregate_rating=aggregate_rating,
+            rating_text="N/A",
+            votes=0,
+            longitude=longitude,
+            latitude=latitude,
+            locality="N/A",
+            locality_verbose="N/A",
+            switch_to_order_menu=False,
+            rating_color="N/A"
+        )
+
+    @staticmethod
+    def from_csv_row(row: List[str]) -> "Record":
+        """Crea un Record desde una fila completa del CSV."""
+
+        def yesno(x: str) -> bool:
+            return str(x).strip().lower() == "yes"
+
+        return Record(
+            restaurant_id=int(row[0]),
+            name=row[1],
+            country_code=int(row[2]),
+            city=row[3],
+            address=row[4],
+            locality=row[5],
+            locality_verbose=row[6],
+            longitude=float(row[7]),
+            latitude=float(row[8]),
+            cuisines=row[9],
+            avg_cost_for_two=int(row[10]),
+            currency=row[11],
+            has_table_booking=yesno(row[12]),
+            has_online_delivery=yesno(row[13]),
+            is_delivering_now=yesno(row[14]),
+            switch_to_order_menu=yesno(row[15]),
+            price_range=int(row[16]),
+            aggregate_rating=float(row[17]),
+            rating_color=row[18],
+            rating_text=row[19],
+            votes=int(row[20])
+        )
+
+    # =========================
+    # SERIALIZACIÓN BINARIA
+    # =========================
+
+    def pack(self) -> bytes:
+        """Empaqueta el registro completo a bytes."""
+        return struct.pack(
+            self.FORMAT,
+            self.restaurant_id,
+            _pad(self.name, NAME_BYTES),
+            self.country_code,
+            _pad(self.city, CITY_BYTES),
+            _pad(self.address, 96),
+            _pad(self.cuisines, 96),
+            self.avg_cost_for_two,
+            _pad(self.currency, 16),
+            self.has_table_booking,
+            self.has_online_delivery,
+            self.is_delivering_now,
+            self.price_range,
+            self.aggregate_rating,
+            _pad(self.rating_text, 16),
+            self.votes,
+            self.longitude,
+            self.latitude,
+            _pad(self.locality, 64),
+            _pad(self.locality_verbose, 64),
+            self.switch_to_order_menu,
+            _pad(self.rating_color, 16)
+        )
+
+    @staticmethod
+    def unpack(data: bytes) -> "Record":
+        """Desempaqueta bytes en un objeto Record."""
+        (rid, name_b, ccode, city_b, addr_b, cuis_b, avgc, curr_b,
+         tb, od, dn, pr, ar, rt_b, votes, lon, lat,
+         loc_b, locv_b, sw, col_b) = struct.unpack(Record.FORMAT, data)
+
+        def dec(b: bytes) -> str:
+            return b.decode("utf-8", errors="ignore").rstrip("\x00 ").strip()
+
+        return Record(
+            restaurant_id=rid,
+            name=dec(name_b),
+            country_code=ccode,
+            city=dec(city_b),
+            address=dec(addr_b),
+            cuisines=dec(cuis_b),
+            avg_cost_for_two=avgc,
+            currency=dec(curr_b),
+            has_table_booking=tb,
+            has_online_delivery=od,
+            is_delivering_now=dn,
+            price_range=pr,
+            aggregate_rating=ar,
+            rating_text=dec(rt_b),
+            votes=votes,
+            longitude=lon,
+            latitude=lat,
+            locality=dec(loc_b),
+            locality_verbose=dec(locv_b),
+            switch_to_order_menu=sw,
+            rating_color=dec(col_b)
         )
 
     def key(self) -> str:
@@ -649,12 +811,25 @@ class ISAM:
         return [
             {
                 "restaurant_id": r.restaurant_id,
-                "restaurant_name": r.name,
+                "name": r.name,
+                "country_code": r.country_code,
                 "city": r.city,
+                "address": r.address,
+                "locality": r.locality,
+                "locality_verbose": r.locality_verbose,
                 "longitude": r.longitude,
                 "latitude": r.latitude,
+                "cuisines": r.cuisines,
                 "average_cost_for_two": r.avg_cost_for_two,
+                "currency": r.currency,
+                "has_table_booking": r.has_table_booking,
+                "has_online_delivery": r.has_online_delivery,
+                "is_delivering_now": r.is_delivering_now,
+                "switch_to_order_menu": r.switch_to_order_menu,
+                "price_range": r.price_range,
                 "aggregate_rating": r.aggregate_rating,
+                "rating_color": r.rating_color,
+                "rating_text": r.rating_text,
                 "votes": r.votes
             }
             for _, r in results
@@ -714,11 +889,24 @@ class ISAM:
             {
                 "restaurant_id": r.restaurant_id,
                 "restaurant_name": r.name,
+                "country_code": r.country_code,
                 "city": r.city,
+                "address": r.address,
+                "locality": r.locality,
+                "locality_verbose": r.locality_verbose,
                 "longitude": r.longitude,
                 "latitude": r.latitude,
+                "cuisines": r.cuisines,
                 "average_cost_for_two": r.avg_cost_for_two,
+                "currency": r.currency,
+                "has_table_booking": r.has_table_booking,
+                "has_online_delivery": r.has_online_delivery,
+                "is_delivering_now": r.is_delivering_now,
+                "switch_to_order_menu": r.switch_to_order_menu,
+                "price_range": r.price_range,
                 "aggregate_rating": r.aggregate_rating,
+                "rating_color": r.rating_color,
+                "rating_text": r.rating_text,
                 "votes": r.votes
             }
             for _, r in res

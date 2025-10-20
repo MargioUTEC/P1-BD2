@@ -2,15 +2,21 @@ from lark import Lark, Transformer, Token, Tree
 from test_parser.core.parser.ast_nodes import (
     CreateTableNode, ColumnDefNode, CreateFromFileNode,
     InsertNode, DeleteNode, SelectNode, SelectSpatialNode,
-    ConditionNode, BetweenConditionNode
+    ConditionNode, BetweenConditionNode, SelectWhereNode, ExplainNode
 )
+
 
 class ParserSQL:
     def __init__(self, grammar_path="test_parser/core/parser/grammar_sql.lark"):
         with open(grammar_path, "r", encoding="utf-8") as f:
             grammar = f.read()
 
-        self.parser = Lark(grammar, start="start", parser="lalr")
+        self.parser = Lark(
+            grammar,
+            start="start",
+            parser="lalr",
+            transformer=SQLTransformer()  # <--- 🔥 Esta línea aplica el transformer
+        )
 
     def parse(self, query: str):
         """
@@ -45,8 +51,31 @@ def _to_str_type(x):
 
 
 class SQLTransformer(Transformer):
+
+    def using_clause_list(self, children):
+        # Ejemplo: ['ISAM'] o ['ISAM', 'AVL']
+        return [str(c).upper() for c in children if c]
+
+
     def where_clause(self, children):
         return children[0]
+
+    def using_all(self, _):
+        return ["ALL"]
+
+    def index_type(self, children):
+        if not children:
+            return ""
+        return str(children[0]).upper()
+
+    def using_list(self, children):
+        return [str(c).upper() for c in children if c]
+
+    def using_clause(self, children):
+        if not children:
+            return ["ALL"]
+        first = children[0]
+        return first if isinstance(first, list) else [str(first).upper()]
 
     # ---------- CREATE TABLE ----------
     def create_table(self, children):
@@ -82,6 +111,7 @@ class SQLTransformer(Transformer):
                 if s in ("SEQ", "ISAM", "BTREE", "RTREE", "HASH"):
                     index_type = s
                 i += 1
+
 
         return ColumnDefNode(name, type_spec, is_key, index_type)
 
@@ -163,6 +193,33 @@ class SQLTransformer(Transformer):
             print(f"[ERROR] Error trying to process rule 'create_from_file': {e}")
             return None
 
+    def explain_stmt(self, children):
+        """
+        children = [Token('ANALYZE'), select_stmt] o solo [select_stmt]
+        """
+        analyze = False
+        if len(children) == 2:
+            analyze = True
+            select_node = children[1]
+        else:
+            select_node = children[0]
+        return ExplainNode(analyze, select_node)
+
+    def analyze_true(self, _):
+        return True
+
+    def analyze_false(self, _):
+        return False
+
+    def explain_statement(self, children):
+        """
+        children = [analyze_flag (bool), select_stmt]
+        """
+        analyze = bool(children[0])
+        select_stmt = children[1]
+        print(f"[DEBUG] explain_statement → ANALYZE={analyze}")
+        return ExplainNode(analyze, select_stmt)
+
     # ---------- INSERT ----------
     def insert_into(self, children):
         name = str(_tokval(children[0]))
@@ -177,28 +234,29 @@ class SQLTransformer(Transformer):
 
     # ---------- SELECT ----------
     def select_stmt(self, children):
-        """
-        Soporta:
-          SELECT * FROM restaurants
-          SELECT Name, City FROM restaurants WHERE City = "Makati"
-          SELECT * FROM restaurants WHERE Rating BETWEEN 4 AND 5
-          SELECT * FROM restaurants WHERE City = "Makati" AND Rating > 4
-        """
         from test_parser.core.parser.ast_nodes import SelectWhereNode
+        from lark import Token
 
         columns = children[0]
-        table = str(_tokval(children[1]))
-        condition = children[2] if len(children) > 2 else None
+        table = str(children[1]) if isinstance(children[1], Token) else str(children[1])
+        using_index = None
+        condition = None
 
-        # Si hay condición, devolvemos un SelectWhereNode
-        if condition is not None:
-            return SelectWhereNode(
-                table_name=table,
-                columns=columns,
-                condition=condition
-            )
-        # Si no hay condición, usamos el nodo base (compatibilidad)
-        return SelectNode(table, columns, condition)
+        for c in children[2:]:
+            if isinstance(c, list) and c:
+                # ['ISAM'] o ['AVL']
+                using_index = c[0].upper()
+            else:
+                condition = c
+
+        print(f"[DEBUG] select_stmt() → using_index={using_index}")
+
+        return SelectWhereNode(
+            table_name=table,
+            columns=columns,
+            condition=condition,
+            using_index=using_index
+        )
 
     # ---------- Espacial dentro de WHERE ----------
     def coord_list(self, children):

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Mini-DB Studio — Búsqueda guiada</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="./style.css" rel="stylesheet" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Mini-DB Studio</div>
+    <nav class="tabs">
+      <a href="index.html" class="tab">Consola SQL</a>
+      <a href="search.html" class="tab active">Búsqueda guiada</a>
+      <a href="explorer.html" class="tab">Explorador de índices</a>
+    </nav>
+    <div class="right-actions">
+      <label class="toggle">
+        <input type="checkbox" id="mockToggle" />
+        <span>Mock</span>
+      </label>
+    </div>
+  </header>
+
+  <main class="layout cols-2">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Filtros</h2>
+        <div class="inline-actions">
+          <button id="btnAddFilter" class="btn ghost">+ Añadir filtro</button>
+          <button id="btnClearFilters" class="btn danger ghost">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="filter-grid" id="filterGrid">
+        <!-- Filtros dinámicos se renderizan aquí -->
+      </div>
+
+      <div class="panel-subsection">
+        <h3>Índice a utilizar</h3>
+        <div class="index-flex">
+          <select id="forcedIndex" class="select">
+            <option value="">Automático (recomendado)</option>
+            <option value="ISAM">ISAM (texto: name, city)</option>
+            <option value="AVL">AVL (numérico: rating, votes, average_cost_for_two)</option>
+            <option value="HASH">Hash (clave exacta: restaurant_id)</option>
+            <option value="BTREE">B+Tree (rangos por id)</option>
+            <option value="RTREE">R-Tree (espacial: lon/lat)</option>
+          </select>
+
+          <div class="help">
+            <p class="muted">El sistema te avisará si la estructura elegida no es ideal para el/los campos filtrados.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-subsection">
+        <h3>Acciones</h3>
+        <div class="inline-actions">
+          <button id="btnSearch" class="btn">Buscar</button>
+          <button id="btnExplain" class="btn ghost">EXPLAIN</button>
+        </div>
+      </div>
+
+      <div class="panel-subsection">
+        <h3>Estado</h3>
+        <div id="status" class="alerts"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Resultados</h2>
+        <div class="inline-actions">
+          <label class="small">Columnas</label>
+          <select id="columnVisibility" multiple class="select multi"></select>
+          <input id="quickSearch" class="input" placeholder="Buscar en resultados…" />
+        </div>
+      </div>
+
+      <div class="table-toolbar">
+        <div class="segmented">
+          <button id="btn10" class="seg active" data-size="10">10</button>
+          <button id="btn25" class="seg" data-size="25">25</button>
+          <button id="btn50" class="seg" data-size="50">50</button>
+        </div>
+        <div class="pill" id="planBadge" hidden>PLAN: —</div>
+      </div>
+
+      <div id="tableWrap" class="table-wrap">
+        <table id="resultTable" class="data-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+        <div id="pager" class="pager"></div>
+      </div>
+    </section>
+  </main>
+
+  <template id="filterRowTpl">
+    <div class="filter-row">
+      <div class="filter-cell">
+        <label>Columna</label>
+        <select class="select col-select"></select>
+      </div>
+      <div class="filter-cell">
+        <label>Operador</label>
+        <select class="select op-select"></select>
+      </div>
+      <div class="filter-cell">
+        <label>Valor</label>
+        <div class="value-slot"></div>
+      </div>
+      <div class="filter-cell small-actions">
+        <button class="btn ghost danger remove-filter">✕</button>
+      </div>
+      <div class="filter-tips"></div>
+    </div>
+  </template>
+
+  <script src="./script.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      App.initSearchPage({
+        filterGridId: 'filterGrid',
+        filterRowTplId: 'filterRowTpl',
+        forcedIndexId: 'forcedIndex',
+        statusId: 'status',
+        runBtnId: 'btnSearch',
+        explainBtnId: 'btnExplain',
+        columnVisibilityId: 'columnVisibility',
+        quickSearchId: 'quickSearch',
+        table: { wrapId: 'tableWrap', tableId: 'resultTable', thead: 'thead', tbody: 'tbody', pagerId: 'pager' },
+        pageSizeButtons: ['btn10','btn25','btn50'],
+        addFilterBtnId: 'btnAddFilter',
+        clearFiltersBtnId: 'btnClearFilters',
+        mockToggleId: 'mockToggle'
+      });
+    });
+  </script>
+</body>
+</html>

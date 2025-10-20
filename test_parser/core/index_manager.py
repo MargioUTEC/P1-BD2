@@ -8,7 +8,8 @@ from test_parser.indexes.hashing.extendible_hashing import ExtendibleHashing
 from test_parser.indexes.rtree_point.rtree_points import RTreePoints
 from test_parser.indexes.avl.avl_file import AVLFile
 from test_parser.indexes.bmas.bplustree import BPlusTreeIndex as BPTree, Record as BPRecord
-
+from test_parser.indexes.isam_s.isam import normalize_text as _norm
+from test_parser.indexes.bmas.bplustree import BPlusTreeIndex
 
 class IndexManager:
     """
@@ -19,11 +20,162 @@ class IndexManager:
     - B+Tree (ID→nombre, rango)
     - AVL (ID primario completo)
     """
+
     def __init__(self, base_dir: str = "test_parser/data"):
-        self.base_dir = Path(base_dir).resolve()
+        # === Carpeta base centralizada ===
+        self.base_dir = Path(__file__).resolve().parent.parent / "data"
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
-        # ISAM
+        # === Archivo base principal ===
+        self.base_table_path = self.base_dir / "restaurants_base.csv"
+
+        self.all_columns = [
+            "Restaurant ID", "Restaurant Name", "Country Code", "City", "Address", "Locality",
+            "Locality Verbose", "Longitude", "Latitude", "Cuisines", "Average Cost for two",
+            "Currency", "Has Table booking", "Has Online delivery", "Is delivering now",
+            "Switch to order menu", "Price range", "Aggregate rating", "Rating color",
+            "Rating text", "Votes"
+        ]
+
+        # === Paths individuales de estructuras ===
+        self.isam_data_path = self.base_dir / "restaurants.dat"
+        self.isam_index_path = self.base_dir / "restaurants.idx"
+        self.hash_path = self.base_dir / "restaurants_hash"
+        self.avl_path = self.base_dir / "restaurants_avl"
+        self.bpt_path = self.base_dir / "bptree_index"
+        self.rtree_path = self.base_dir / "rtree_index"
+
+        # === ISAM ===
+        try:
+            self.isam = ISAM(
+                data_path=str(self.isam_data_path),
+                index_path=str(self.isam_index_path)
+            )
+            print("[INIT] ISAM inicializado correctamente.")
+        except Exception as e:
+            print(f"[WARN] No se pudo inicializar ISAM: {e}")
+            self.isam = None
+
+        # === Extendible Hashing ===
+        # === Extendible Hashing ===
+        try:
+            hash_dir = self.base_dir / "restaurants_hash" / "restaurants_hash_dir.json"
+            hash_data = self.base_dir / "restaurants_hash" / "restaurants_hash_data.dat"
+
+            if hash_dir.exists() and hash_data.exists():
+                self.hash = ExtendibleHashing(
+                    base_path=str(self.base_dir / "restaurants_hash"),
+                    name="restaurants_hash"
+                )
+                print("[INIT] Extendible Hash reabierto correctamente.")
+            else:
+                print("[WARN] Archivos de Hash no encontrados.")
+                self.hash = None
+        except Exception as e:
+            print(f"[WARN] No se pudo inicializar Extendible Hash: {e}")
+            self.hash = None
+
+        # === AVL ===
+        try:
+            avl_file = self.avl_path
+            if avl_file.exists() or Path(str(avl_file) + ".avl").exists():
+                self.avl = AVLFile(str(avl_file))
+                print("[INIT] AVL reabierto correctamente.")
+            else:
+                print("[WARN] Archivo de AVL no encontrado.")
+                self.avl = None
+        except Exception as e:
+            print(f"[WARN] No se pudo inicializar AVL: {e}")
+            self.avl = None
+
+        # === B+ Tree ===
+        # === B+ Tree ===
+        try:
+            # Rutas correctas (según build_from_csv)
+            bpt_data = self.base_dir / "bptree_index.dat"
+            bpt_meta = self.base_dir / "bptree_meta.json"
+
+            if bpt_data.exists() and bpt_meta.exists():
+                self.bpt = BPlusTreeIndex(
+                    data_file=str(bpt_data),
+                    meta_file=str(bpt_meta)
+                )
+                print("[INIT] B+Tree reabierto correctamente.")
+            else:
+                # Si no existen, crear automáticamente el índice vacío
+                print("[WARN] Archivos de B+Tree no encontrados. Se creará uno nuevo.")
+                self.bpt = BPlusTreeIndex(
+                    data_file=str(bpt_data),
+                    meta_file=str(bpt_meta)
+                )
+        except Exception as e:
+            print(f"[WARN] No se pudo inicializar B+Tree: {e}")
+            self.bpt = None
+
+        # === R-Tree ===
+        try:
+            base_path = self.rtree_path
+            data_file = base_path.with_suffix(".data")
+            index_file = base_path.with_suffix(".index")
+
+            if data_file.exists() and index_file.exists():
+                self.rtree = RTreePoints(index_name=str(base_path))
+                print("[INIT] R-Tree reabierto correctamente.")
+            else:
+                print("[WARN] Archivos del R-Tree no encontrados.")
+                self.rtree = None
+        except Exception as e:
+            print(f"[WARN] No se pudo inicializar R-Tree: {e}")
+            self.rtree = None
+    def _rec_to_dict(self, r) -> dict:
+        return {
+            "restaurant_id": r.restaurant_id,
+            "name": r.name,
+            "country_code": r.country_code,
+            "city": r.city,
+            "address": r.address,
+            "locality": r.locality,
+            "locality_verbose": r.locality_verbose,
+            "longitude": r.longitude,
+            "latitude": r.latitude,
+            "cuisines": r.cuisines,
+            "average_cost_for_two": r.avg_cost_for_two,
+            "currency": r.currency,
+            "has_table_booking": r.has_table_booking,
+            "has_online_delivery": r.has_online_delivery,
+            "is_delivering_now": r.is_delivering_now,
+            "switch_to_order_menu": r.switch_to_order_menu,
+            "price_range": r.price_range,
+            "aggregate_rating": r.aggregate_rating,
+            "rating_color": r.rating_color,
+            "rating_text": r.rating_text,
+            "votes": r.votes
+        }
+
+    def search_text(self, field: str, value: str, op: str = "=") -> list[dict]:
+        fld = field.strip().lower()
+        valn = _norm(str(value))
+        out = []
+        attr_name = {
+            "restaurant_name": "name"
+        }.get(fld, fld)
+        use_like = op and op.upper() == "LIKE" and "%" in valn
+        if use_like:
+            import re
+            pattern = "^" + re.escape(valn).replace(r"\%", ".*") + "$"
+            rgx = re.compile(pattern)
+
+            for _, page in self.isam.data.iter_pages():
+                for rec in page.records:
+                    txt = getattr(rec, attr_name, "")
+                    txtn = _norm(str(txt))
+                    match = (rgx.fullmatch(txtn) is not None) if use_like else (txtn == valn)
+                    if match:
+                        out.append(self._rec_to_dict(rec))
+
+            return out
+
+        # === ISAM ===
         self.isam_data_path = self.base_dir / "restaurants.dat"
         self.isam_index_path = self.base_dir / "restaurants.idx"
         self.isam = ISAM(
@@ -31,7 +183,7 @@ class IndexManager:
             index_path=str(self.isam_index_path)
         )
 
-        # HASH
+        # === HASH ===
         self.hash_path = self.base_dir / "hash"
         self.hash = ExtendibleHashing(
             base_path=str(self.hash_path),
@@ -40,15 +192,15 @@ class IndexManager:
             name="restaurants_hash"
         )
 
-        # R-TREE
+        # === R-TREE ===
         self.rtree_path = self.base_dir / "rtree_index"
         self.rtree = RTreePoints(index_name=str(self.rtree_path), max_children=50)
 
-        # AVL
+        # === AVL ===
         self.avl_path = self.base_dir / "restaurants_avl"
         self.avl = AVLFile(str(self.avl_path))
 
-        # B+TREE
+        # === B+TREE ===
         self.bpt = BPTree()
 
     def build_from_csv(self, csv_path: str, limit: int | None = 50, using_indexes: list[str] | None = None):
@@ -195,11 +347,27 @@ class IndexManager:
         # ======================================================
         if "BTREE" in using_indexes or "B+TREE" in using_indexes:
             print("[INFO] Construyendo índice B+Tree...")
-            self.bpt = BPTree()
+
+            # Rutas dentro del directorio centralizado /data
+            bpt_data = self.base_dir / "bptree_index.dat"
+            bpt_meta = self.base_dir / "bptree_meta.json"
+
+            # Elimina previos si existen
+            for f in [bpt_data, bpt_meta]:
+                if f.exists():
+                    f.unlink(missing_ok=True)
+
+            # Crear instancia de B+Tree con rutas explícitas
+            self.bpt = BPlusTreeIndex(
+                data_file=str(bpt_data),
+                meta_file=str(bpt_meta)
+            )
+
             try:
                 rows = BPRecord.load_from_csv(csv_path)
             except Exception:
                 rows = None
+
             it = rows[:limit] if rows and limit else (rows or recs)
             for rec in it:
                 try:
@@ -370,14 +538,107 @@ class IndexManager:
     # ======================================================
     #  INSERCIÓN / ELIMINACIÓN
     # ======================================================
+    def insert_full(self, record_dict: dict):
+        import csv, os
+        from test_parser.indexes.isam_s.isam import Record  # usa tu Record actualizado
+
+        # ----------------------------
+        # 1) Normalizar / mapear campos
+        # ----------------------------
+        # mapeo de nombres CSV → atributos del Record
+        mapping = {
+            "Average Cost for two": "avg_cost_for_two",
+            "Has Table booking": "has_table_booking",
+            "Has Online delivery": "has_online_delivery",
+            "Is delivering now": "is_delivering_now",
+            "Switch to order menu": "switch_to_order_menu",
+            "Aggregate rating": "aggregate_rating",
+            "Rating color": "rating_color",
+            "Rating text": "rating_text",
+            "Price range": "price_range",
+        }
+        normalized = dict(record_dict)  # copia
+        for old, new in mapping.items():
+            if old in normalized:
+                normalized[new] = normalized.pop(old)
+
+        # ----------------------------
+        # 2) Construir el Record
+        # ----------------------------
+        # Nota: Ajusta estos campos a tu dataclass Record actual.
+        rec = Record(
+            restaurant_id=self._to_int(normalized.get("Restaurant ID")),
+            name=normalized.get("Restaurant Name", ""),
+            country_code=self._to_int(normalized.get("Country Code")),
+            city=normalized.get("City", ""),
+            address=normalized.get("Address", ""),
+            cuisines=normalized.get("Cuisines", ""),
+            avg_cost_for_two=self._to_int(normalized.get("avg_cost_for_two")),
+            currency=normalized.get("Currency", ""),
+            has_table_booking=self._to_bool_yesno(normalized.get("has_table_booking")),
+            has_online_delivery=self._to_bool_yesno(normalized.get("has_online_delivery")),
+            is_delivering_now=self._to_bool_yesno(normalized.get("is_delivering_now")),
+            price_range=self._to_int(normalized.get("price_range")),
+            aggregate_rating=self._to_float(normalized.get("aggregate_rating")),
+            rating_text=normalized.get("rating_text", ""),
+            votes=self._to_int(normalized.get("Votes")),
+            longitude=self._to_float(normalized.get("Longitude")),
+            latitude=self._to_float(normalized.get("Latitude")),
+        )
+
+        # 🔒 3) Chequeo de duplicado por ID (global)
+        rid = int(rec.restaurant_id)
+        if self._id_exists(rid):
+            print(f"[DUPLICATE] Restaurant ID={rid} ya existe. No se insertará ni en índices ni en CSV.")
+            return
+
+        # ----------------------------
+        # 4) Insertar en índices primero
+        # ----------------------------
+        ok = self.insert(rec)
+        if not ok:
+            print("[ERROR] El INSERT falló en alguna estructura. No se persistirá en CSV.")
+            return
+
+        # ----------------------------
+        # 5) Persistir en CSV (si todo OK arriba)
+        # ----------------------------
+        os.makedirs(self.base_table_path.parent, exist_ok=True)
+        is_new = not os.path.exists(self.base_table_path)
+
+        # Reconstruir dict con los nombres EXACTOS del CSV (self.all_columns)
+        # y sus valores originales (no los normalizados internos)
+        row = {k: record_dict.get(k, "") for k in self.all_columns}
+
+        with open(self.base_table_path, "a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=self.all_columns)
+            if is_new:
+                writer.writeheader()
+            writer.writerow(row)
+
+        print("[OK] Registro insertado en índices y CSV base.")
+
     def insert(self, record: Record):
-        print(f"[INSERT] {record.name} ({record.city})")
+        """
+        Inserta en todas las estructuras con trazas detalladas de depuración.
+        Si alguna inserción falla, aborta y muestra el traceback completo.
+        """
+        import traceback
 
-        # ISAM
-        self.isam.insert(record)
+        rid = int(record.restaurant_id)
+        print(f"\n[INSERT DEBUG] === Iniciando inserción global para ID={rid} ({record.name}, {record.city}) ===")
 
-        # HASH
+        # 🔒 Verificar duplicado global por Restaurant ID
+        if self._id_exists(rid):
+            print(f"[DUPLICATE] Restaurant ID={rid} ya existe. Se omite la inserción.")
+            return False
+
         try:
+            print("[1] → Insertando en ISAM...")
+            self.isam.insert(record)
+            print("[OK] ISAM completado.")
+
+            print("[2] → Insertando en HASH...")
             self.hash.add({
                 "Restaurant ID": record.restaurant_id,
                 "Name": record.name,
@@ -386,11 +647,9 @@ class IndexManager:
                 "Longitude": record.longitude,
                 "Latitude": record.latitude
             })
-        except Exception as e:
-            print(f"[HASH-ERROR] insert: {e}")
+            print("[OK] HASH completado.")
 
-        # RTREE
-        try:
+            print("[3] → Insertando en RTREE...")
             self.rtree.add_point(record.longitude, record.latitude, {
                 "Restaurant_ID": record.restaurant_id,
                 "Restaurant_Name": record.name,
@@ -398,11 +657,9 @@ class IndexManager:
                 "Aggregate_rating": record.aggregate_rating
             })
             self.rtree.save()
-        except Exception as e:
-            print(f"[RTree-ERROR] insert: {e}")
+            print("[OK] RTREE completado.")
 
-        # AVL
-        try:
+            print("[4] → Insertando en AVL...")
             self.avl.insert({
                 "restaurant_id": record.restaurant_id,
                 "restaurant_name": record.name,
@@ -413,14 +670,20 @@ class IndexManager:
                 "aggregate_rating": record.aggregate_rating,
                 "votes": getattr(record, "votes", 0)
             })
-        except Exception as e:
-            print(f"[AVL-ERROR] insert: {e}")
+            print("[OK] AVL completado.")
 
-        # B+TREE
-        try:
+            print("[5] → Insertando en B+TREE...")
             self.bpt.insert(int(record.restaurant_id), record.name)
+            print("[OK] B+TREE completado.")
+
+            print("[INSERT DEBUG] ✅ Todas las estructuras insertadas correctamente.\n")
+            return True
+
         except Exception as e:
-            print(f"[BPT-ERROR] insert: {e}")
+            print(f"[ERROR] Fallo durante la inserción: {type(e).__name__} → {e}")
+            print("".join(traceback.format_exc()))
+            print("[ABORT] Cancelando inserción global tras error.")
+            return False
 
     def delete(self, name: str = "", city: str = "", restaurant_id: int | None = None):
         """
@@ -534,4 +797,208 @@ class IndexManager:
             pass
 
         print("[INFO] Índices cerrados correctamente.")
+
+    def force_search(self, forced_index, cond):
+        """
+        Ejecuta una búsqueda forzada según el índice especificado en la consulta.
+        Retorna un diccionario con formato JSON amigable para frontend:
+        {
+            "status": "success" | "error" | "warning",
+            "index": "<nombre del índice>",
+            "message": "<texto descriptivo>",
+            "results": [ ... ]
+        }
+        """
+        attr = getattr(cond, "attribute", "").lower()
+        op = getattr(cond, "operator", "=")
+        val = getattr(cond, "value", None)
+
+        print(f"[DEBUG] Ejecutando búsqueda forzada con índice {forced_index} en atributo '{attr}'")
+
+        textual_fields = {"name", "city"}
+        numeric_fields = {"rating", "aggregate_rating", "votes", "average_cost_for_two"}
+        spatial_fields = {"coords", "longitude", "latitude"}
+        id_fields = {"id", "restaurant_id"}
+
+        # === VALIDACIONES DE COMPATIBILIDAD =================================
+        if forced_index == "AVL" and attr not in numeric_fields:
+            msg = f"❌ El índice AVL solo puede aplicarse a campos numéricos: {', '.join(numeric_fields)}."
+            print("[ERROR]", msg)
+            return {"status": "error", "index": forced_index, "message": msg, "results": []}
+
+        if forced_index == "ISAM" and attr not in textual_fields:
+            msg = f"❌ El índice ISAM solo puede aplicarse a campos textuales: {', '.join(textual_fields)}."
+            print("[ERROR]", msg)
+            return {"status": "error", "index": forced_index, "message": msg, "results": []}
+
+        if forced_index == "HASH" and not any(f in attr for f in id_fields):
+            msg = "❌ El índice HASH solo puede aplicarse a campos ID (por ejemplo 'restaurant_id')."
+            print("[ERROR]", msg)
+            return {"status": "error", "index": forced_index, "message": msg, "results": []}
+
+        if forced_index == "RTREE" and attr not in spatial_fields:
+            msg = f"❌ El índice R-Tree requiere coordenadas espaciales ({', '.join(spatial_fields)})."
+            print("[ERROR]", msg)
+            return {"status": "error", "index": forced_index, "message": msg, "results": []}
+
+        # === EJECUCIÓN SEGÚN ÍNDICE ========================================
+        try:
+            if forced_index == "ISAM":
+                results = self.search_by_name(
+                    val if attr == "name" else "",
+                    val if attr == "city" else ""
+                )
+                return {
+                    "status": "success",
+                    "index": "ISAM",
+                    "message": f"✅ Búsqueda ISAM completada para {attr}='{val}'.",
+                    "results": results
+                }
+
+            elif forced_index == "AVL":
+                results = self.search_comparison(attr, op, float(val))
+                return {
+                    "status": "success",
+                    "index": "AVL",
+                    "message": f"✅ Búsqueda AVL completada ({attr} {op} {val}).",
+                    "results": results
+                }
+
+
+            elif forced_index == "HASH":
+                result = self.hash.search(int(val))
+                if result:
+                    rid = int(result.get("Restaurant ID", val))
+                    # Buscar la versión completa en los otros índices
+                    full_info = self.search_by_id(rid)
+                    results = full_info if full_info else [result]
+                else:
+                    results = []
+                return {
+                    "status": "success",
+                    "index": "HASH",
+                    "message": f"✅ Búsqueda HASH completada para ID={val}.",
+                    "results": results
+                }
+
+
+            elif forced_index == "RTREE":
+                if hasattr(cond, "point") and hasattr(cond, "radius"):
+                    x, y = cond.point
+                    results = self.search_near(x, y, cond.radius)
+                    return {
+                        "status": "success",
+                        "index": "RTREE",
+                        "message": f"✅ Búsqueda R-Tree completada en entorno ({x}, {y}) ± {cond.radius}.",
+                        "results": results
+                    }
+                msg = "❌ Faltan coordenadas o radio para búsqueda espacial con R-Tree."
+                print("[ERROR]", msg)
+                return {"status": "error", "index": forced_index, "message": msg, "results": []}
+
+
+
+            elif forced_index == "BTREE":
+
+                value = self.bpt.search(int(val))
+
+                if value is None:
+
+                    results = []
+
+                else:
+
+                    # Buscar información completa en otros índices
+
+                    full = self.search_by_id(int(val))
+
+                    if full:
+
+                        results = full
+
+                    else:
+
+                        results = [{"restaurant_id": int(val), "restaurant_name": value}]
+
+                return {
+
+                    "status": "success",
+
+                    "index": "BTREE",
+
+                    "message": f"✅ Búsqueda B+Tree completada para ID={val}.",
+
+                    "results": results
+
+                }
+
+
+
+            else:
+                msg = f"⚠️ Índice '{forced_index}' no reconocido o no implementado."
+                print("[WARN]", msg)
+                return {"status": "warning", "index": forced_index, "message": msg, "results": []}
+
+        except Exception as e:
+            msg = f"❌ Error interno al ejecutar búsqueda con {forced_index}: {e}"
+            print("[ERROR]", msg)
+            return {"status": "error", "index": forced_index, "message": msg, "results": []}
+
+    # ==========================
+    # Helpers de normalización
+    # ==========================
+    @staticmethod
+    def _to_int(value, default=0):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return default
+
+    @staticmethod
+    def _to_float(value, default=0.0):
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return default
+
+    @staticmethod
+    def _to_bool_yesno(value, default=False):
+        """
+        Acepta Yes/No, True/False, 1/0, 'y'/'n', etc.
+        """
+        if value is None:
+            return default
+        s = str(value).strip().lower()
+        if s in {"yes", "y", "true", "t", "1"}:
+            return True
+        if s in {"no", "n", "false", "f", "0"}:
+            return False
+        return default
+
+    # ==========================
+    # Políticas de unicidad
+    # ==========================
+    def _id_exists(self, rid: int) -> bool:
+        """
+        Chequeo rápido de existencia global por ID usando índices que ya lo tienen:
+         - B+Tree (rápido y persistente)
+         - si falla, Hash
+         - como fallback, AVL
+        """
+        try:
+            if self.bpt.search(rid) is not None:
+                return True
+        except Exception:
+            pass
+        try:
+            if self.hash.search(rid):
+                return True
+        except Exception:
+            pass
+        try:
+            if self.avl.search(rid):
+                return True
+        except Exception:
+            pass
+        return False
 
