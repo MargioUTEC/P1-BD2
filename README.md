@@ -167,21 +167,4 @@ Salida esperada:
 [PLAN] Usando AVL para búsqueda por comparación (aggregate_rating > 4.0)
 [OK] 4 resultado(s) encontrados vía condición compuesta (AND)
 
-------------------------------------------------------------
-
-OBSERVACIONES
-
-- Los índices son persistentes y se mantienen entre ejecuciones.
-- Los archivos .dat, .idx y .json se crean automáticamente.
-- El sistema puede ampliarse con operaciones de inserción y eliminación.
-- La arquitectura modular permite integrar nuevos índices fácilmente.
-
-------------------------------------------------------------
-
-CONCLUSIÓN
-
-Mini-DB demuestra cómo las técnicas de organización e indexación de archivos pueden integrarse en un motor funcional.
-Gracias a la combinación de ISAM, AVL, B+-Tree, Extendible Hashing y R-Tree, el sistema soporta consultas textuales, numéricas y espaciales con operadores lógicos (AND, OR), ofreciendo una arquitectura completa, escalable y extensible.
-
-
 
