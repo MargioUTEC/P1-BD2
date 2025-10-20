@@ -59,7 +59,7 @@ Este proyecto busca demostrar eficiencia en las operaciones, claridad en la estr
 
 Cada estructura se guarda en archivos binarios independientes y es administrada por `IndexManager`.
 
----
+------------------------------------------------------------
 
 PASOS DE EJECUCIÓN
 
@@ -85,13 +85,13 @@ Ejecutar:
 python server.py
 
 Esto inicia el servidor backend (Flask o FastAPI).
-Luego abrir en el navegador:
+Luego abrir el navegador en:
 http://127.0.0.1:8000
 
 En esta interfaz se encuentran tres secciones:
 - Consola SQL para ejecutar consultas.
 - Búsqueda guiada para seleccionar filtros.
-- Explorador de índices para visualizar la estructura interna.
+- Explorador de índices para visualizar las estructuras internas.
 
 ------------------------------------------------------------
 
@@ -123,7 +123,7 @@ Etapa 1: frontend
 El usuario ingresa la consulta SQL.
 
 Etapa 2: parser_sql
-Se tokeniza y genera el árbol sintáctico (AST).
+Se tokeniza la consulta y se genera el árbol sintáctico (AST).
 
 Etapa 3: executor
 Se construye el plan de ejecución.
@@ -166,5 +166,9 @@ Salida esperada:
 [PLAN] Usando ISAM para búsqueda por texto (city = 'Taguig City')
 [PLAN] Usando AVL para búsqueda por comparación (aggregate_rating > 4.0)
 [OK] 4 resultado(s) encontrados vía condición compuesta (AND)
+
+------------------------------------------------------------
+
+
 
 
